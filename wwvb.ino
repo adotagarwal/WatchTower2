@@ -7,7 +7,7 @@ enum WWVB_T {
   MARK = 2,
 };
 
-const int PIN_ANTENNA = 21;
+const int PIN_ANTENNA = A5;
 const int PIN_LED = LED_BUILTIN; // for visual confirmation
 const char *timezone = "PST8PDT,M3.2.0,M11.1.0"; // America/Los_Angeles
 
@@ -20,16 +20,24 @@ const int   daylightOffset_sec = 3600;
 
 
 
-// void IRAM_ATTR timerHandler0(void)
-// {
-//   // Serial.printf("boo\n");
-//   time_t t = time(NULL);
-//   struct tm buf;
-//   localtime_r(&t, &buf);
-//   // getLocalTime(&buf);
-//   toggle = computePinState(buf.tm_hour,buf.tm_min,buf.tm_sec,buf.tm_yday,buf.tm_mday,buf.tm_mon,buf.tm_year,buf.tm_isdst);
-//   digitalWrite(PIN_ANTENNA, toggle);
-// }
+void IRAM_ATTR timerHandler0(void)
+{
+  // TODO move to an ISR, but localtime is crashing in ISR
+  // will getLocalTime also crash?
+  struct timeval now;
+  gettimeofday(&now,NULL);
+  struct tm buf;
+  // localtime_r(&now.tv_sec, &buf);
+  gmtime_r(&now.tv_sec, &buf); // TODO debugging
+  const bool prevPinValue = pinValue;
+  pinValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday,buf.tm_mday,buf.tm_mon,buf.tm_year,buf.tm_isdst);
+  if( pinValue != prevPinValue ) {
+    digitalWrite(PIN_ANTENNA, pinValue);
+    if(PIN_LED!=NULL) {
+      digitalWrite(PIN_LED, pinValue);
+    }
+  }
+}
 
 void setup() {
   Serial.begin(115200);
@@ -52,7 +60,7 @@ void setup() {
 
   // auto timer = timerBegin(1000000); // 1Mhz
   // timerAttachInterrupt(timer, &timerHandler0);
-  // timerAlarm(timer, 1000000, true, 0);
+  // timerAlarm(timer, 100000, true, 0); // every 100ms
 }
 
 void loop() {
@@ -61,7 +69,8 @@ void loop() {
   struct timeval now;
   gettimeofday(&now,NULL);
   struct tm buf;
-  localtime_r(&now.tv_sec, &buf);
+  // localtime_r(&now.tv_sec, &buf);
+  gmtime_r(&now.tv_sec, &buf); // TODO debugging
   const bool prevPinValue = pinValue;
   pinValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday,buf.tm_mday,buf.tm_mon,buf.tm_year,buf.tm_isdst);
   if( pinValue != prevPinValue ) {
@@ -70,7 +79,6 @@ void loop() {
       digitalWrite(PIN_LED, pinValue);
     }
   }
-  // Serial.printf("%d: %s", (int)pinValue,asctime(&buf));
 }
 
 
