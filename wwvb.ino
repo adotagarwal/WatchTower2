@@ -8,6 +8,7 @@ enum WWVB_T {
 };
 
 const int PIN_ANTENNA = 21;
+const int PIN_LED = LED_BUILTIN; // for visual confirmation
 const char *timezone = "PST8PDT,M3.2.0,M11.1.0"; // America/Los_Angeles
 
 
@@ -33,6 +34,9 @@ const int   daylightOffset_sec = 3600;
 void setup() {
   Serial.begin(115200);
   pinMode(PIN_ANTENNA, OUTPUT);
+  if( PIN_LED!=NULL ) {
+    pinMode(PIN_LED, OUTPUT);
+  }
   wifiManager.autoConnect("WWVB");
 
   configTime(0, 0, ntpServer);
@@ -53,6 +57,7 @@ void setup() {
 
 void loop() {
   // TODO move to an ISR, but localtime is crashing in ISR
+  // will getLocalTime also crash?
   struct timeval now;
   gettimeofday(&now,NULL);
   struct tm buf;
@@ -61,8 +66,11 @@ void loop() {
   pinValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday,buf.tm_mday,buf.tm_mon,buf.tm_year,buf.tm_isdst);
   if( pinValue != prevPinValue ) {
     digitalWrite(PIN_ANTENNA, pinValue);
+    if(PIN_LED!=NULL) {
+      digitalWrite(PIN_LED, pinValue);
+    }
   }
-  printf("%d %d: %s", (int)pinValue, now.tv_usec/1000,asctime(&buf));
+  // Serial.printf("%d: %s", (int)pinValue,asctime(&buf));
 }
 
 
