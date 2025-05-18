@@ -1,3 +1,6 @@
+#include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
+#include "time.h"
+
 enum WWVB_T {
   ZERO = 0,
   ONE = 1,
@@ -5,6 +8,16 @@ enum WWVB_T {
 };
 
 const int PIN_ANTENNA = 21;
+const char *timezone = "PST8PDT,M3.2.0,M11.1.0"; // America/Los_Angeles
+
+
+WiFiManager wifiManager;
+bool pinValue = 0;
+const char* ntpServer = "pool.ntp.org";
+const long  gmtOffset_sec = 0;
+const int   daylightOffset_sec = 3600;
+
+
 
 // void IRAM_ATTR timerHandler0(void)
 // {
@@ -20,6 +33,19 @@ const int PIN_ANTENNA = 21;
 void setup() {
   Serial.begin(115200);
   pinMode(PIN_ANTENNA, OUTPUT);
+  wifiManager.autoConnect("WWVB");
+
+  configTime(0, 0, ntpServer);
+  struct tm timeinfo;
+  if(!getLocalTime(&timeinfo)){
+    Serial.println("Failed to obtain time");
+    return;
+  }
+  Serial.println("Got the time from NTP");
+  // Now we can set the real timezone
+  setenv("TZ",timezone,1);  //  Now adjust the TZ.  Clock settings are adjusted to show the new local time
+  tzset();
+
   // auto timer = timerBegin(1000000); // 1Mhz
   // timerAttachInterrupt(timer, &timerHandler0);
   // timerAlarm(timer, 1000000, true, 0);
@@ -31,8 +57,11 @@ void loop() {
   gettimeofday(&now,NULL);
   struct tm buf;
   localtime_r(&now.tv_sec, &buf);
-  bool pinValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday,buf.tm_mday,buf.tm_mon,buf.tm_year,buf.tm_isdst);
-  digitalWrite(PIN_ANTENNA, pinValue);
+  const bool prevPinValue = pinValue;
+  pinValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday,buf.tm_mday,buf.tm_mon,buf.tm_year,buf.tm_isdst);
+  if( pinValue != prevPinValue ) {
+    digitalWrite(PIN_ANTENNA, pinValue);
+  }
   printf("%d %d: %s", (int)pinValue, now.tv_usec/1000,asctime(&buf));
 }
 
