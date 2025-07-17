@@ -1,3 +1,5 @@
+// Derived from https://github.com/anishathalye/micro-wwvb/blob/master/src/microwwvb.c
+
 #include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
 #include "time.h"
 
