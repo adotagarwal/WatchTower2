@@ -1,4 +1,7 @@
 // Derived from https://github.com/anishathalye/micro-wwvb/blob/master/src/microwwvb.c
+// Simulator: https://wokwi.com/projects/431240334467357697
+//      (make sure to comment out the wifi bits)
+//      (may also need to change the antenna pin)
 
 #include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
 #include "time.h"
@@ -10,36 +13,38 @@ enum WWVB_T {
 };
 
 const int PIN_ANTENNA = A5;
+const int KHZ_60 = 60000;
 const int PIN_LED = LED_BUILTIN; // for visual confirmation
+const int RESOLUTION = 8; // 8-bit is 0-255
 const char *timezone = "PST8PDT,M3.2.0,M11.1.0"; // America/Los_Angeles
 
 
 WiFiManager wifiManager;
-bool pinValue = 0;
+bool logicValue = 0;
 const char* ntpServer = "pool.ntp.org";
 const long  gmtOffset_sec = 0;
 const int   daylightOffset_sec = 3600;
 
 
 
-void IRAM_ATTR timerHandler0(void)
-{
-  // TODO move to an ISR, but localtime is crashing in ISR
-  // will getLocalTime also crash?
-  struct timeval now;
-  gettimeofday(&now,NULL);
-  struct tm buf;
-  // localtime_r(&now.tv_sec, &buf);
-  gmtime_r(&now.tv_sec, &buf); // TODO debugging
-  const bool prevPinValue = pinValue;
-  pinValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday,buf.tm_mday,buf.tm_mon,buf.tm_year,buf.tm_isdst);
-  if( pinValue != prevPinValue ) {
-    digitalWrite(PIN_ANTENNA, pinValue);
-    if(PIN_LED!=NULL) {
-      digitalWrite(PIN_LED, pinValue);
-    }
-  }
-}
+// void IRAM_ATTR timerHandler0(void)
+// {
+//   // TODO move to an ISR, but localtime is crashing in ISR
+//   // will getLocalTime also crash?
+//   struct timeval now;
+//   gettimeofday(&now,NULL);
+//   struct tm buf;
+//   // localtime_r(&now.tv_sec, &buf);
+//   gmtime_r(&now.tv_sec, &buf); // TODO debugging
+//   const bool prevPinValue = logicValue;
+//   logicValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday,buf.tm_mday,buf.tm_mon,buf.tm_year,buf.tm_isdst);
+//   if( logicValue != prevPinValue ) {
+//     // digitalWrite(PIN_ANTENNA, pinValue);
+//     if(PIN_LED!=NULL) {
+//       // digitalWrite(PIN_LED, pinValue);
+//     }
+//   }
+// }
 
 void setup() {
   Serial.begin(115200);
@@ -63,7 +68,14 @@ void setup() {
   // auto timer = timerBegin(1000000); // 1Mhz
   // timerAttachInterrupt(timer, &timerHandler0);
   // timerAlarm(timer, 100000, true, 0); // every 100ms
+
+  // Start the 60khz carrier signal
+  // analogWriteFrequency(PIN_ANTENNA, KHZ_60);
+  ledcAttach(PIN_ANTENNA, KHZ_60, RESOLUTION);
+
 }
+
+int prev_tv_sec = -1;
 
 void loop() {
   // TODO move to an ISR, but localtime is crashing in ISR
@@ -73,14 +85,30 @@ void loop() {
   struct tm buf;
   // localtime_r(&now.tv_sec, &buf);
   gmtime_r(&now.tv_sec, &buf); // TODO debugging
-  const bool prevPinValue = pinValue;
-  pinValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday,buf.tm_mday,buf.tm_mon,buf.tm_year,buf.tm_isdst);
-  if( pinValue != prevPinValue ) {
-    digitalWrite(PIN_ANTENNA, pinValue);
+  buf.tm_min /= 2; // TODO debugging
+
+  const bool prevLogicValue = logicValue;
+  logicValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday,buf.tm_year,buf.tm_isdst);
+  if( logicValue != prevLogicValue ) {
+    // analogWrite(PIN_ANTENNA, dutyCycle(logicValue)); // Update the duty cycle of the PWM
+    ledcWrite(PIN_ANTENNA, dutyCycle(logicValue));  // Update the duty cycle of the PWM
     if(PIN_LED!=NULL) {
-      digitalWrite(PIN_LED, pinValue);
+      digitalWrite(PIN_LED, logicValue);
     }
   }
+
+  // do any logging after we set the bit to not slow anything down
+  if(now.tv_sec != prev_tv_sec) {
+    prev_tv_sec = now.tv_sec;
+    char timeStringBuff[64]; // Buffer to hold the formatted time string
+    strftime(timeStringBuff, sizeof(timeStringBuff), "%A, %B %d %Y %H:%M:%S", &buf);
+    Serial.println(timeStringBuff);
+  }
+}
+
+// Returns 50% duty cycle (128) for high, 0% for low
+static inline short dutyCycle(bool logicValue) {
+  return logicValue ? (256*0.5) : 0; // 128 == 50% duty cycle
 }
 
 
@@ -92,8 +120,6 @@ bool wwvbPinState(
     int second,
     int millis,
     int yday,
-    int mday,
-    int month,
     int year,
     int dst
 ) {
