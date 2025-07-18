@@ -309,11 +309,11 @@ bool wwvbPinState(
     // one: low 500ms, high 500ms
     // mark low 800ms, high 200ms
     if (bit == WWVB_T::ZERO) {
-      return millis > 200;
+      return millis >= 200;
     } else if (bit == WWVB_T::ONE) {
-      return millis > 500;
+      return millis >= 500;
     } else {
-      return millis > 800;
+      return millis >= 800;
     }
 }
 
