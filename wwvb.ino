@@ -83,9 +83,14 @@ void loop() {
   // localtime_r(&now.tv_sec, &buf);
   gmtime_r(&now.tv_sec, &buf); // TODO debugging
   buf.tm_min /= 2; // TODO debugging
+  // TODO debugging https://www.nist.gov/pml/time-and-frequency-division/time-distribution/radio-station-wwvb/wwvb-time-code-format
+  // buf.tm_year = 101; // 2001
+  // buf.tm_yday = 258;
+  // buf.tm_hour = 18;
+  // buf.tm_min = 42;
 
   const bool prevLogicValue = logicValue;
-  logicValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday,buf.tm_year,buf.tm_isdst);
+  logicValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday,buf.tm_year+1900,buf.tm_isdst);
   if( logicValue != prevLogicValue ) {
     ledcWrite(PIN_ANTENNA, dutyCycle(logicValue));  // Update the duty cycle of the PWM
     if(PIN_LED!=NULL) {
