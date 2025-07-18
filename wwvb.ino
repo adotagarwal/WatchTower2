@@ -70,7 +70,6 @@ void setup() {
   // timerAlarm(timer, 100000, true, 0); // every 100ms
 
   // Start the 60khz carrier signal
-  // analogWriteFrequency(PIN_ANTENNA, KHZ_60);
   ledcAttach(PIN_ANTENNA, KHZ_60, RESOLUTION);
 
 }
@@ -88,7 +87,6 @@ void loop() {
   const bool prevLogicValue = logicValue;
   logicValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday,buf.tm_year,buf.tm_isdst);
   if( logicValue != prevLogicValue ) {
-    // analogWrite(PIN_ANTENNA, dutyCycle(logicValue)); // Update the duty cycle of the PWM
     ledcWrite(PIN_ANTENNA, dutyCycle(logicValue));  // Update the duty cycle of the PWM
     if(PIN_LED!=NULL) {
       digitalWrite(PIN_LED, logicValue);
