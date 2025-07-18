@@ -75,8 +75,6 @@ void setup() {
 
 }
 
-int prev_tv_sec = -1;
-
 void loop() {
   // TODO move to an ISR, but localtime is crashing in ISR
   // will getLocalTime also crash?
@@ -95,14 +93,11 @@ void loop() {
     if(PIN_LED!=NULL) {
       digitalWrite(PIN_LED, logicValue);
     }
-  }
 
-  // do any logging after we set the bit to not slow anything down
-  if(now.tv_sec != prev_tv_sec) {
-    prev_tv_sec = now.tv_sec;
+    // do any logging after we set the bit to not slow anything down
     char timeStringBuff[64]; // Buffer to hold the formatted time string
     strftime(timeStringBuff, sizeof(timeStringBuff), "%A, %B %d %Y %H:%M:%S", &buf);
-    Serial.println(timeStringBuff);
+    Serial.printf("%s %03d: %s\n",timeStringBuff, now.tv_usec/1000, logicValue ? "1" : "0");
   }
 }
 
