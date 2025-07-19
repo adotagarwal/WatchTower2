@@ -1,7 +1,31 @@
 // Derived from https://github.com/anishathalye/micro-wwvb/blob/master/src/microwwvb.c
+// https://www.instructables.com/WWVB-radio-time-signal-generator-for-ATTINY45-or-A/
+// https://en.wikipedia.org/wiki/WWVB
+// https://www.nist.gov/pml/time-and-frequency-division/time-distribution/radio-station-wwvb/wwvb-time-code-format
+//
 // Simulator: https://wokwi.com/projects/431240334467357697
 //      (make sure to comment out the wifi bits)
 //      (may also need to change the antenna pin)
+//
+// Working
+// - verified 2025-09-15 18:42 using oscilloscope with 100%/0% duty cycles and the
+//   waves look exactly like the NIST example (except 2025 instead of 2001)
+// - the watches sense the carrier wave since they move to "Working" (both for 20" straight and canaduino antennas)
+//   but they can't turn that into a time
+// - try 80% duty cycle?
+// - WOOO! I set the junghans with the straight antenna!! Not the casio though.
+//   https://photos.app.goo.gl/R9BfENnQBhxtWPzTA (junghans is -30m which is my debugging value)
+//   I think it will work better once i have the amplifier circuit and the canaduino antenna
+// 
+// Hypotheses
+// - maybe 3.3v isn't enough? https://www.instructables.com/WWVB-radio-time-signal-generator-for-ATTINY45-or-A/ uses 5v
+//   https://github.com/anishathalye/micro-wwvb doesn't say but it uses mini-usb which is 5v
+//   - Principle: A transistor, specifically a BJT or MOSFET, can act as a switch, amplifying the ESP32's 3.3V signal to control the 5V LED circuit.
+//   - try using an amplifer circuit
+// - maybe the antenna has too much induction? try a 20" flat wire?
+// - try a different watch
+// - are the watches getting confused by the hardcoded minute?
+
 
 #include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
 #include "time.h"
@@ -82,9 +106,12 @@ void loop() {
   struct tm buf;
   // localtime_r(&now.tv_sec, &buf);
   gmtime_r(&now.tv_sec, &buf); // TODO debugging
-  buf.tm_min /= 2; // TODO debugging
+  buf.tm_min = (buf.tm_min + 30 ) % 60; // TODO debugging
   // TODO debugging https://www.nist.gov/pml/time-and-frequency-division/time-distribution/radio-station-wwvb/wwvb-time-code-format
   // buf.tm_year = 101; // 2001
+  // buf.tm_year = 125; // 2025
+  // buf.tm_mon = 8; // sep
+  // buf.tm_mday = 15; 
   // buf.tm_yday = 258;
   // buf.tm_hour = 18;
   // buf.tm_min = 42;
