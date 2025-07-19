@@ -106,7 +106,10 @@ void loop() {
   struct tm buf;
   // localtime_r(&now.tv_sec, &buf);
   gmtime_r(&now.tv_sec, &buf); // TODO debugging
-  buf.tm_min = (buf.tm_min + 30 ) % 60; // TODO debugging
+  // buf.tm_min = (buf.tm_min + 30 ) % 60; // TODO debugging
+  buf.tm_yday = 365; // hardcode to dec 31 for debugging
+  buf.tm_mday = 31;
+  buf.tm_mon = 11;
   // TODO debugging https://www.nist.gov/pml/time-and-frequency-division/time-distribution/radio-station-wwvb/wwvb-time-code-format
   // buf.tm_year = 101; // 2001
   // buf.tm_year = 125; // 2025
