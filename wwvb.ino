@@ -86,7 +86,11 @@ void loop() {
   gettimeofday(&now,NULL);
   localtime_r(&now.tv_sec, &buf);
 
-  // buf.tm_yday = 365; // TODO hardcode to dec 31 for easy visual verification
+  // DEBUGGING
+  // If you're not sure if your clock is being set,
+  // you can uncomment these lines to force the date
+  // to 31 which makes it easy to tell.
+  // buf.tm_yday = 365;
   // buf.tm_mday = 31;
   // buf.tm_mon = 11;
 
