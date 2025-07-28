@@ -85,7 +85,7 @@ void loop() {
   // If you're not sure if your clock is being set,
   // you can uncomment these lines to offset the
   // time by 30 minutes
-  buf_now_utc.tm_min = buf_now_local.tm_min = (buf_now_utc.tm_min + 30) % 60;
+  // buf_now_utc.tm_min = buf_now_local.tm_min = (buf_now_utc.tm_min + 30) % 60;
 
   const bool prevLogicValue = logicValue;
 
