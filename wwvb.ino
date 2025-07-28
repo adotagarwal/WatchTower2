@@ -36,7 +36,7 @@ enum WWVB_T {
   MARK = 2,
 };
 
-const int PIN_ANTENNA = A5;
+const int PIN_ANTENNA = 32;
 const int KHZ_60 = 60000;
 const int PIN_LED = LED_BUILTIN; // for visual confirmation
 const int RESOLUTION = 8; // 8-bit is 0-255
