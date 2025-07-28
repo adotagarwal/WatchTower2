@@ -79,16 +79,16 @@ void setup() {
 }
 
 void loop() {
-  // TODO add sleep
+  // TODO add sleep for planet earth
 
   struct timeval now;
-  gettimeofday(&now,NULL);
   struct tm buf;
-  // localtime_r(&now.tv_sec, &buf);
-  gmtime_r(&now.tv_sec, &buf); // TODO debugging
-  buf.tm_yday = 365; // hardcode to dec 31 for debugging
-  buf.tm_mday = 31;
-  buf.tm_mon = 11;
+  gettimeofday(&now,NULL);
+  localtime_r(&now.tv_sec, &buf);
+
+  // buf.tm_yday = 365; // TODO hardcode to dec 31 for easy visual verification
+  // buf.tm_mday = 31;
+  // buf.tm_mon = 11;
 
   const bool prevLogicValue = logicValue;
   logicValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday,buf.tm_year+1900,buf.tm_isdst);
