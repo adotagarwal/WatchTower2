@@ -89,7 +89,7 @@ void loop() {
 
   const bool prevLogicValue = logicValue;
 
-  logicValue = wwvbPinState(
+  logicValue = wwvbLogicSignal(
     buf_now_utc.tm_hour,
     buf_now_utc.tm_min,
     buf_now_utc.tm_sec,
@@ -122,7 +122,7 @@ static inline short dutyCycle(bool logicValue) {
 // Returns a logical high or low to indicate whether the
 // PWM signal should be high or low based on the current time
 // https://www.nist.gov/pml/time-and-frequency-division/time-distribution/radio-station-wwvb/wwvb-time-code-format
-bool wwvbPinState(
+bool wwvbLogicSignal(
     int hour,
     int minute,
     int second,
