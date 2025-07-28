@@ -7,27 +7,8 @@
 //      (make sure to comment out the wifi bits)
 //      (may also need to change the antenna pin)
 //
-// Working
-// - verified 2025-09-15 18:42 using oscilloscope with 100%/0% duty cycles and the
-//   waves look exactly like the NIST example (except 2025 instead of 2001)
-// - the watches sense the carrier wave since they move to "Working" (both for 20" straight and canaduino antennas)
-//   but they can't turn that into a time
-// - try 80% duty cycle?
-// - WOOO! I set the junghans with the straight antenna!! Not the casio though.
-//   https://photos.app.goo.gl/R9BfENnQBhxtWPzTA (junghans is -30m which is my debugging value)
-//   I think it will work better once i have the amplifier circuit and the canaduino antenna
-// 
-// Hypotheses
-// - maybe 3.3v isn't enough? https://www.instructables.com/WWVB-radio-time-signal-generator-for-ATTINY45-or-A/ uses 5v
-//   https://github.com/anishathalye/micro-wwvb doesn't say but it uses mini-usb which is 5v
-//   - Principle: A transistor, specifically a BJT or MOSFET, can act as a switch, amplifying the ESP32's 3.3V signal to control the 5V LED circuit.
-//   - try using an amplifer circuit
-// - maybe the antenna has too much induction? try a 20" flat wire?
-// - try a different watch
-// - are the watches getting confused by the hardcoded minute?
 
-
-#include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
+#include <WiFiManager.h>
 #include "time.h"
 
 enum WWVB_T {
@@ -38,25 +19,23 @@ enum WWVB_T {
 
 const int PIN_ANTENNA = 32;
 const int KHZ_60 = 60000;
-const int PIN_LED = LED_BUILTIN; // for visual confirmation
-const char *timezone = "PST8PDT,M3.2.0,M11.1.0"; // America/Los_Angeles
+const int PIN_LED = LED_BUILTIN; // for visual confirmation, set to -1 to disable
+const char *timezone = "PST8PDT,M3.2.0,M11.1.0"; // America/Los_Angeles, set to your timezone
 
 
 WiFiManager wifiManager;
-bool logicValue = 0;
 const char* ntpServer = "pool.ntp.org";
-const long  gmtOffset_sec = 0;
-const int   daylightOffset_sec = 3600;
+bool logicValue = 0; // TODO rename
 
 
 void setup() {
   Serial.begin(115200);
   pinMode(PIN_ANTENNA, OUTPUT);
-  if( PIN_LED!=NULL ) {
+  if( PIN_LED>=0 ) {
     pinMode(PIN_LED, OUTPUT);
   }
 
-  // Connect to WiFi.
+  // Connect to WiFi using // https://github.com/tzapu/WiFiManager 
   // If no wifi, start up an SSID called "WWVB" so
   // the user can configure wifi using their phone.
   wifiManager.autoConnect("WWVB");
@@ -98,7 +77,7 @@ void loop() {
   logicValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday,buf.tm_year+1900,buf.tm_isdst);
   if( logicValue != prevLogicValue ) {
     ledcWrite(PIN_ANTENNA, dutyCycle(logicValue));  // Update the duty cycle of the PWM
-    if(PIN_LED!=NULL) {
+    if(PIN_LED>=0) {
       digitalWrite(PIN_LED, logicValue);
     }
 
