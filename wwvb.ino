@@ -39,7 +39,6 @@ enum WWVB_T {
 const int PIN_ANTENNA = 32;
 const int KHZ_60 = 60000;
 const int PIN_LED = LED_BUILTIN; // for visual confirmation
-const int RESOLUTION = 8; // 8-bit is 0-255
 const char *timezone = "PST8PDT,M3.2.0,M11.1.0"; // America/Los_Angeles
 
 
@@ -50,34 +49,19 @@ const long  gmtOffset_sec = 0;
 const int   daylightOffset_sec = 3600;
 
 
-
-// void IRAM_ATTR timerHandler0(void)
-// {
-//   // TODO move to an ISR, but localtime is crashing in ISR
-//   // will getLocalTime also crash?
-//   struct timeval now;
-//   gettimeofday(&now,NULL);
-//   struct tm buf;
-//   // localtime_r(&now.tv_sec, &buf);
-//   gmtime_r(&now.tv_sec, &buf); // TODO debugging
-//   const bool prevPinValue = logicValue;
-//   logicValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday,buf.tm_mday,buf.tm_mon,buf.tm_year,buf.tm_isdst);
-//   if( logicValue != prevPinValue ) {
-//     // digitalWrite(PIN_ANTENNA, pinValue);
-//     if(PIN_LED!=NULL) {
-//       // digitalWrite(PIN_LED, pinValue);
-//     }
-//   }
-// }
-
 void setup() {
   Serial.begin(115200);
   pinMode(PIN_ANTENNA, OUTPUT);
   if( PIN_LED!=NULL ) {
     pinMode(PIN_LED, OUTPUT);
   }
+
+  // Connect to WiFi.
+  // If no wifi, start up an SSID called "WWVB" so
+  // the user can configure wifi using their phone.
   wifiManager.autoConnect("WWVB");
 
+  // Connect to network time server
   configTime(0, 0, ntpServer);
   struct tm timeinfo;
   if(!getLocalTime(&timeinfo)){
@@ -85,39 +69,26 @@ void setup() {
     return;
   }
   Serial.println("Got the time from NTP");
+
   // Now we can set the real timezone
   setenv("TZ",timezone,1);  //  Now adjust the TZ.  Clock settings are adjusted to show the new local time
   tzset();
 
-  // auto timer = timerBegin(1000000); // 1Mhz
-  // timerAttachInterrupt(timer, &timerHandler0);
-  // timerAlarm(timer, 100000, true, 0); // every 100ms
-
-  // Start the 60khz carrier signal
-  ledcAttach(PIN_ANTENNA, KHZ_60, RESOLUTION);
-
+  // Start the 60khz carrier signal using 8-bit (0-255) resolution
+  ledcAttach(PIN_ANTENNA, KHZ_60, 8);
 }
 
 void loop() {
-  // TODO move to an ISR, but localtime is crashing in ISR
-  // will getLocalTime also crash?
+  // TODO add sleep
+
   struct timeval now;
   gettimeofday(&now,NULL);
   struct tm buf;
   // localtime_r(&now.tv_sec, &buf);
   gmtime_r(&now.tv_sec, &buf); // TODO debugging
-  // buf.tm_min = (buf.tm_min + 30 ) % 60; // TODO debugging
   buf.tm_yday = 365; // hardcode to dec 31 for debugging
   buf.tm_mday = 31;
   buf.tm_mon = 11;
-  // TODO debugging https://www.nist.gov/pml/time-and-frequency-division/time-distribution/radio-station-wwvb/wwvb-time-code-format
-  // buf.tm_year = 101; // 2001
-  // buf.tm_year = 125; // 2025
-  // buf.tm_mon = 8; // sep
-  // buf.tm_mday = 15; 
-  // buf.tm_yday = 258;
-  // buf.tm_hour = 18;
-  // buf.tm_min = 42;
 
   const bool prevLogicValue = logicValue;
   logicValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday,buf.tm_year+1900,buf.tm_isdst);
