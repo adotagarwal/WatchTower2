@@ -76,7 +76,7 @@ void loop() {
   // buf.tm_mon = 11;
 
   const bool prevLogicValue = logicValue;
-  logicValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday,buf.tm_year+1900,buf.tm_isdst);
+  logicValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday+1,buf.tm_year+1900,buf.tm_isdst);
   if( logicValue != prevLogicValue ) {
     ledcWrite(PIN_ANTENNA, dutyCycle(logicValue));  // Update the duty cycle of the PWM
     digitalWrite(PIN_LED, logicValue);
