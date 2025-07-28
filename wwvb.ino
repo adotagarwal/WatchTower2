@@ -20,12 +20,7 @@ enum WWVB_T {
 const int PIN_ANTENNA = 13;
 const int KHZ_60 = 60000;
 const int PIN_LED = LED_BUILTIN; // for visual confirmation
-
-// Timezone is just for our debugging output, it's
-// not used by the wwvb signal we brodcast
-// (which is broadcast as UTC)
 const char *timezone = "PST8PDT,M3.2.0,M11.1.0"; // America/Los_Angeles, set to your timezone
-
 
 WiFiManager wifiManager;
 const char* ntpServer = "pool.ntp.org";
@@ -51,9 +46,10 @@ void setup() {
   }
   Serial.println("Got the time from NTP");
 
-  // Now we can set the real timezone
-  // setenv("TZ",timezone,1);  //  Now adjust the TZ.  Clock settings are adjusted to show the new local time
-  // tzset();
+  // Now we can set the real timezone.
+  // We broadcast in UTC, but we need the timezone for the is_dst bit
+  setenv("TZ",timezone,1);  //  Now adjust the TZ.  Clock settings are adjusted to show the new local time
+  tzset();
 
   // Start the 60khz carrier signal using 8-bit (0-255) resolution
   ledcAttach(PIN_ANTENNA, KHZ_60, 8);
@@ -63,31 +59,42 @@ void loop() {
   // TODO add sleep for planet earth
 
   struct timeval now;
-  struct tm buf;
+  struct tm buf_gmt, buf_local;
   gettimeofday(&now,NULL);
-  gmtime_r(&now.tv_sec, &buf);
+  gmtime_r(&now.tv_sec, &buf_gmt); // used for UTC
+  localtime_r(&now.tv_sec, &buf_local); // used for is_dst flag and debugging output
 
   // DEBUGGING
   // If you're not sure if your clock is being set,
   // you can uncomment these lines to force the date
   // to 31 which makes it easy to tell (except on the 31st).
-  // buf.tm_yday = 365;
-  // buf.tm_mday = 31;
-  // buf.tm_mon = 11;
+  buf_gmt.tm_yday = buf_local.tm_yday = 365;
+  buf_gmt.tm_mday = buf_local.tm_mday = 31;
+  buf_gmt.tm_mon  = buf_local.tm_mon = 11;
 
   const bool prevLogicValue = logicValue;
-  logicValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday+1,buf.tm_year+1900,buf.tm_isdst);
+
+  logicValue = wwvbPinState(
+    buf_gmt.tm_hour,
+    buf_gmt.tm_min,
+    buf_gmt.tm_sec,
+    now.tv_usec/1000,
+    buf_gmt.tm_yday+1,
+    buf_gmt.tm_year+1900,
+    buf_local.tm_isdst);
+
   if( logicValue != prevLogicValue ) {
     ledcWrite(PIN_ANTENNA, dutyCycle(logicValue));  // Update the duty cycle of the PWM
     digitalWrite(PIN_LED, logicValue);
 
     // do any logging after we set the bit to not slow anything down
     char timeStringBuff[64]; // Buffer to hold the formatted time string
-    strftime(timeStringBuff, sizeof(timeStringBuff), "%A, %B %d %Y %H:%M:%S", &buf);
-    Serial.printf("%s %03d UTC: %s\n",timeStringBuff, now.tv_usec/1000, logicValue ? "1" : "0");
+    strftime(timeStringBuff, sizeof(timeStringBuff), "%A, %B %d %Y %H:%M:%S", &buf_local);
+    Serial.printf("%s.%03d (%s): %s\n",timeStringBuff, now.tv_usec/1000, buf_local.tm_isdst ? "DST":"STD", logicValue ? "1" : "0");
   }
 }
 
+// Convert a logical bit into a PWM pulse width.
 // Returns 50% duty cycle (128) for high, 0% for low
 static inline short dutyCycle(bool logicValue) {
   return logicValue ? (256*0.5) : 0; // 128 == 50% duty cycle
