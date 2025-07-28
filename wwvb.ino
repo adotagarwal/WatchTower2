@@ -19,7 +19,11 @@ enum WWVB_T {
 
 const int PIN_ANTENNA = 32;
 const int KHZ_60 = 60000;
-const int PIN_LED = LED_BUILTIN; // for visual confirmation, set to -1 to disable
+const int PIN_LED = LED_BUILTIN; // for visual confirmation
+
+// Timezone is just for our debugging output, it's
+// not used by the wwvb signal we brodcast
+// (which is broadcast as UTC)
 const char *timezone = "PST8PDT,M3.2.0,M11.1.0"; // America/Los_Angeles, set to your timezone
 
 
@@ -31,9 +35,7 @@ bool logicValue = 0; // TODO rename
 void setup() {
   Serial.begin(115200);
   pinMode(PIN_ANTENNA, OUTPUT);
-  if( PIN_LED>=0 ) {
-    pinMode(PIN_LED, OUTPUT);
-  }
+  pinMode(PIN_LED, OUTPUT);
 
   // Connect to WiFi using // https://github.com/tzapu/WiFiManager 
   // If no wifi, start up an SSID called "WWVB" so
@@ -63,7 +65,7 @@ void loop() {
   struct timeval now;
   struct tm buf;
   gettimeofday(&now,NULL);
-  localtime_r(&now.tv_sec, &buf);
+  gmtime_r(&now.tv_sec, &buf);
 
   // DEBUGGING
   // If you're not sure if your clock is being set,
@@ -77,9 +79,7 @@ void loop() {
   logicValue = wwvbPinState(buf.tm_hour,buf.tm_min,buf.tm_sec,now.tv_usec/1000,buf.tm_yday,buf.tm_year+1900,buf.tm_isdst);
   if( logicValue != prevLogicValue ) {
     ledcWrite(PIN_ANTENNA, dutyCycle(logicValue));  // Update the duty cycle of the PWM
-    if(PIN_LED>=0) {
-      digitalWrite(PIN_LED, logicValue);
-    }
+    digitalWrite(PIN_LED, logicValue);
 
     // do any logging after we set the bit to not slow anything down
     char timeStringBuff[64]; // Buffer to hold the formatted time string
