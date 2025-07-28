@@ -17,7 +17,7 @@ enum WWVB_T {
   MARK = 2,
 };
 
-const int PIN_ANTENNA = 32;
+const int PIN_ANTENNA = 13;
 const int KHZ_60 = 60000;
 const int PIN_LED = LED_BUILTIN; // for visual confirmation
 
@@ -52,8 +52,8 @@ void setup() {
   Serial.println("Got the time from NTP");
 
   // Now we can set the real timezone
-  setenv("TZ",timezone,1);  //  Now adjust the TZ.  Clock settings are adjusted to show the new local time
-  tzset();
+  // setenv("TZ",timezone,1);  //  Now adjust the TZ.  Clock settings are adjusted to show the new local time
+  // tzset();
 
   // Start the 60khz carrier signal using 8-bit (0-255) resolution
   ledcAttach(PIN_ANTENNA, KHZ_60, 8);
@@ -70,7 +70,7 @@ void loop() {
   // DEBUGGING
   // If you're not sure if your clock is being set,
   // you can uncomment these lines to force the date
-  // to 31 which makes it easy to tell.
+  // to 31 which makes it easy to tell (except on the 31st).
   // buf.tm_yday = 365;
   // buf.tm_mday = 31;
   // buf.tm_mon = 11;
@@ -84,7 +84,7 @@ void loop() {
     // do any logging after we set the bit to not slow anything down
     char timeStringBuff[64]; // Buffer to hold the formatted time string
     strftime(timeStringBuff, sizeof(timeStringBuff), "%A, %B %d %Y %H:%M:%S", &buf);
-    Serial.printf("%s %03d: %s\n",timeStringBuff, now.tv_usec/1000, logicValue ? "1" : "0");
+    Serial.printf("%s %03d UTC: %s\n",timeStringBuff, now.tv_usec/1000, logicValue ? "1" : "0");
   }
 }
 
