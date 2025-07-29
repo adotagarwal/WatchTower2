@@ -10,6 +10,7 @@
 
 #include <WiFiManager.h>
 #include "time.h"
+#include "esp_sntp.h"
 
 enum WWVB_T {
   ZERO = 0,
@@ -28,11 +29,18 @@ const char *timezone = "PST8PDT,M3.2.0,M11.1.0"; // America/Los_Angeles
 WiFiManager wifiManager;
 const char* ntpServer = "pool.ntp.org";
 bool logicValue = 0; // TODO rename
+struct timeval lastSync;
 
 
 // A tricky way to force arduino to reboot
 // by accessing a protected memory address
 void(* forceReboot) (void) = 0;
+
+// A callback that tracks when we last sync'ed the
+// time with the ntp server
+void time_sync_notification_cb(struct timeval *tv) {
+  lastSync = *tv;
+}
 
 void setup() {
   Serial.begin(115200);
@@ -50,6 +58,10 @@ void setup() {
   // If no wifi, start up an SSID called "WWVB" so
   // the user can configure wifi using their phone.
   wifiManager.autoConnect("WWVB");
+
+  // Register a callback to be informed when we sync
+  // the time over the network
+  sntp_set_time_sync_notification_cb(time_sync_notification_cb);
 
   // Connect to network time server
   // By default, it will resync every hour
@@ -98,6 +110,9 @@ void loop() {
   // you can uncomment these lines to offset the
   // time by 30 minutes
   // buf_now_utc.tm_min = buf_now_local.tm_min = (buf_now_utc.tm_min + 30) % 60;
+  // or set the date to dec 31
+  buf_now_utc.tm_yday = buf_now_local.tm_yday = 365;
+
 
   const bool prevLogicValue = logicValue;
 
@@ -114,17 +129,24 @@ void loop() {
 
   if( logicValue != prevLogicValue ) {
     ledcWrite(PIN_ANTENNA, dutyCycle(logicValue));  // Update the duty cycle of the PWM
-    // digitalWrite(PIN_LED, logicValue);
+    // digitalWrite(PIN_LED, logicValue); // TODO too bright
 
     // do any logging after we set the bit to not slow anything down,
     // serial port I/O is slow!
     char timeStringBuff[100]; // Buffer to hold the formatted time string
     strftime(timeStringBuff, sizeof(timeStringBuff), "%A, %B %d %Y %H:%M:%S", &buf_now_local);
-    Serial.printf("%s.%03d (%s): %s\n",timeStringBuff, now.tv_usec/1000, buf_now_local.tm_isdst ? "DST" : "STD", logicValue ? "1" : "0");
 
-    // TODO add indicator light and reboot
-    // if it's been more than 4h since last sync
-  }
+    char lastSyncStringBuff[100]; // Buffer to hold the formatted time string
+    struct tm buf_lastSync;
+    localtime_r(&lastSync.tv_sec, &buf_lastSync);
+    strftime(lastSyncStringBuff, sizeof(lastSyncStringBuff), "%b %d %Y %H:%M", &buf_lastSync);
+    Serial.printf("%s.%03d (%s) [last sync %s]: %s\n",timeStringBuff, now.tv_usec/1000, buf_now_local.tm_isdst ? "DST" : "STD", lastSyncStringBuff, logicValue ? "1" : "0");
+
+    if( now.tv_sec - lastSync.tv_sec > 60 * 60 * 4 ) {
+      digitalWrite(PIN_LED, 1); // TODO make red
+    }
+  
+  }  
 }
 
 // Convert a logical bit into a PWM pulse width.
