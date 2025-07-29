@@ -121,6 +121,9 @@ void loop() {
     char timeStringBuff[100]; // Buffer to hold the formatted time string
     strftime(timeStringBuff, sizeof(timeStringBuff), "%A, %B %d %Y %H:%M:%S", &buf_now_local);
     Serial.printf("%s.%03d (%s): %s\n",timeStringBuff, now.tv_usec/1000, buf_now_local.tm_isdst ? "DST" : "STD", logicValue ? "1" : "0");
+
+    // TODO add indicator light and reboot
+    // if it's been more than 4h since last sync
   }
 }
 
