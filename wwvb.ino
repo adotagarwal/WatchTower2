@@ -40,6 +40,11 @@ void setup() {
 
   pinMode(PIN_ANTENNA, OUTPUT);
   pinMode(PIN_LED, OUTPUT);
+  digitalWrite(PIN_LED, 1);
+
+  // hack for this on esp32 qt py?
+  // E (14621) rmt: rmt_new_tx_channel(269): not able to power down in light sleep
+  digitalWrite(PIN_ANTENNA, 0);
 
   // Connect to WiFi using // https://github.com/tzapu/WiFiManager 
   // If no wifi, start up an SSID called "WWVB" so
