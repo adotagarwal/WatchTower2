@@ -92,7 +92,7 @@ void loop() {
   logicValue = wwvbLogicSignal(
     buf_now_utc.tm_hour,
     buf_now_utc.tm_min,
-    buf_now_utc.tm_sec,
+    buf_now_utc.tm_sec, 
     now.tv_usec/1000,
     buf_now_utc.tm_yday+1,
     buf_now_utc.tm_year+1900,
@@ -123,13 +123,13 @@ static inline short dutyCycle(bool logicValue) {
 // PWM signal should be high or low based on the current time
 // https://www.nist.gov/pml/time-and-frequency-division/time-distribution/radio-station-wwvb/wwvb-time-code-format
 bool wwvbLogicSignal(
-    int hour,
-    int minute,
-    int second,
+    int hour,                // 0 - 23
+    int minute,              // 0 - 59
+    int second,              // 0 - 59 (leap 60)
     int millis,
-    int yday,
-    int year,
-    int today_start_isdst, // was this morning DST?
+    int yday,                // days since January 1 eg. Jan 1 is 0
+    int year,                // year since 0, eg. 2025
+    int today_start_isdst,   // was this morning DST?
     int tomorrow_start_isdst // is tomorrow morning DST?
 ) {
     int leap = is_leap_year(year);
