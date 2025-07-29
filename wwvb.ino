@@ -51,7 +51,7 @@ void setup() {
   struct tm timeinfo;
   if(!getLocalTime(&timeinfo)){
     Serial.println("Failed to obtain time");
-    Serial.flush();
+    delay(100);
     forceReboot();
   }
   Serial.println("Got the time from NTP");
