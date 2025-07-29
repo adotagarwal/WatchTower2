@@ -30,6 +30,10 @@ const char* ntpServer = "pool.ntp.org";
 bool logicValue = 0; // TODO rename
 
 
+// A tricky way to force arduino to reboot
+// by accessing a protected memory address
+void(* forceReboot) (void) = 0;
+
 void setup() {
   Serial.begin(115200);
   delay(1000);
@@ -47,7 +51,8 @@ void setup() {
   struct tm timeinfo;
   if(!getLocalTime(&timeinfo)){
     Serial.println("Failed to obtain time");
-    return; // TODO abort
+    delay(100);
+    forceReboot();
   }
   Serial.println("Got the time from NTP");
 
