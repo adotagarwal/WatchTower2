@@ -52,6 +52,7 @@ void setup() {
   wifiManager.autoConnect("WWVB");
 
   // Connect to network time server
+  // By default, it will resync every hour
   configTime(0, 0, ntpServer);
   struct tm timeinfo;
   if(!getLocalTime(&timeinfo)){
@@ -68,6 +69,7 @@ void setup() {
 
   // Start the 60khz carrier signal using 8-bit (0-255) resolution
   ledcAttach(PIN_ANTENNA, KHZ_60, 8);
+  digitalWrite(PIN_LED, 0);
 }
 
 void loop() {
@@ -112,7 +114,7 @@ void loop() {
 
   if( logicValue != prevLogicValue ) {
     ledcWrite(PIN_ANTENNA, dutyCycle(logicValue));  // Update the duty cycle of the PWM
-    digitalWrite(PIN_LED, logicValue);
+    // digitalWrite(PIN_LED, logicValue);
 
     // do any logging after we set the bit to not slow anything down,
     // serial port I/O is slow!
