@@ -9,6 +9,7 @@
 //
 
 #include <WiFiManager.h>
+#include <Adafruit_NeoPixel.h>
 #include "time.h"
 #include "esp_sntp.h"
 
@@ -20,14 +21,14 @@ enum WWVB_T {
 
 const int PIN_ANTENNA = 13;
 const int KHZ_60 = 60000;
-const int PIN_LED = LED_BUILTIN; // for visual confirmation
 
 // Set to your timezone.
 // This is needed for computing DST if applicable
 const char *timezone = "PST8PDT,M3.2.0,M11.1.0"; // America/Los_Angeles
+const char* ntpServer = "pool.ntp.org";
 
 WiFiManager wifiManager;
-const char* ntpServer = "pool.ntp.org";
+Adafruit_NeoPixel pixels(1, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
 bool logicValue = 0; // TODO rename
 struct timeval lastSync;
 
@@ -45,10 +46,11 @@ void time_sync_notification_cb(struct timeval *tv) {
 void setup() {
   Serial.begin(115200);
   delay(1000);
+  pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
 
   pinMode(PIN_ANTENNA, OUTPUT);
-  pinMode(PIN_LED, OUTPUT);
-  digitalWrite(PIN_LED, 1);
+  pixels.setPixelColor(0, pixels.Color(32, 20, 0));
+  pixels.show();
 
   // hack for this on esp32 qt py?
   // E (14621) rmt: rmt_new_tx_channel(269): not able to power down in light sleep
@@ -59,17 +61,17 @@ void setup() {
   // the user can configure wifi using their phone.
   wifiManager.autoConnect("WWVB");
 
-  // Register a callback to be informed when we sync
-  // the time over the network
-  sntp_set_time_sync_notification_cb(time_sync_notification_cb);
-
   // Connect to network time server
   // By default, it will resync every hour
+  // Register a callback to be informed when we sync
+  sntp_set_time_sync_notification_cb(time_sync_notification_cb);
   configTime(0, 0, ntpServer);
   struct tm timeinfo;
   if(!getLocalTime(&timeinfo)){
     Serial.println("Failed to obtain time");
-    delay(1000);
+    pixels.setPixelColor(0, pixels.Color(150, 0, 0));
+    pixels.show();
+    delay(3000);
     forceReboot();
   }
   Serial.println("Got the time from NTP");
@@ -81,7 +83,14 @@ void setup() {
 
   // Start the 60khz carrier signal using 8-bit (0-255) resolution
   ledcAttach(PIN_ANTENNA, KHZ_60, 8);
-  digitalWrite(PIN_LED, 0);
+
+  // green means go
+  pixels.setPixelColor(0, pixels.Color(0, 60, 0));
+  pixels.show();
+  delay(3000);
+
+  pixels.clear();  
+  pixels.show();
 }
 
 void loop() {
@@ -129,7 +138,13 @@ void loop() {
 
   if( logicValue != prevLogicValue ) {
     ledcWrite(PIN_ANTENNA, dutyCycle(logicValue));  // Update the duty cycle of the PWM
-    // digitalWrite(PIN_LED, logicValue); // TODO too bright
+
+    // light up the pixel if desired
+    // if( logicValue == 1 ) {
+    //   pixels.setPixelColor(0, pixels.Color(32, 20, 0)); // don't call show yet, the color may change
+    // } else {
+    //   pixels.clear();
+    // }
 
     // do any logging after we set the bit to not slow anything down,
     // serial port I/O is slow!
@@ -142,10 +157,12 @@ void loop() {
     strftime(lastSyncStringBuff, sizeof(lastSyncStringBuff), "%b %d %Y %H:%M", &buf_lastSync);
     Serial.printf("%s.%03d (%s) [last sync %s]: %s\n",timeStringBuff, now.tv_usec/1000, buf_now_local.tm_isdst ? "DST" : "STD", lastSyncStringBuff, logicValue ? "1" : "0");
 
+    // If no sync, set the pixel to red
     if( now.tv_sec - lastSync.tv_sec > 60 * 60 * 4 ) {
-      digitalWrite(PIN_LED, 1); // TODO make red
+      pixels.setPixelColor(0, pixels.Color(150, 0, 0));
     }
-  
+
+    pixels.show();  
   }  
 }
 
