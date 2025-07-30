@@ -32,6 +32,10 @@ Adafruit_NeoPixel pixels(1, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
 bool logicValue = 0; // TODO rename
 struct timeval lastSync;
 
+const uint32_t COLOR_READY = pixels.Color(0, 60, 0);
+const uint32_t COLOR_LOADING = pixels.Color(32, 20, 0);
+const uint32_t COLOR_ERROR = pixels.Color(150, 0, 0);
+const uint32_t COLOR_TRANSMIT = pixels.Color(32, 20, 0);
 
 // A tricky way to force arduino to reboot
 // by accessing a protected memory address
@@ -49,7 +53,7 @@ void setup() {
   pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
 
   pinMode(PIN_ANTENNA, OUTPUT);
-  pixels.setPixelColor(0, pixels.Color(32, 20, 0));
+  pixels.setPixelColor(0, COLOR_LOADING );
   pixels.show();
 
   // hack for this on esp32 qt py?
@@ -69,7 +73,7 @@ void setup() {
   struct tm timeinfo;
   if(!getLocalTime(&timeinfo)){
     Serial.println("Failed to obtain time");
-    pixels.setPixelColor(0, pixels.Color(150, 0, 0));
+    pixels.setPixelColor(0, COLOR_ERROR );
     pixels.show();
     delay(3000);
     forceReboot();
@@ -85,7 +89,7 @@ void setup() {
   ledcAttach(PIN_ANTENNA, KHZ_60, 8);
 
   // green means go
-  pixels.setPixelColor(0, pixels.Color(0, 60, 0));
+  pixels.setPixelColor(0, COLOR_READY );
   pixels.show();
   delay(3000);
 
@@ -141,7 +145,7 @@ void loop() {
 
     // light up the pixel if desired
     // if( logicValue == 1 ) {
-    //   pixels.setPixelColor(0, pixels.Color(32, 20, 0)); // don't call show yet, the color may change
+    //   pixels.setPixelColor(0, COLOR_TRANSMIT ); // don't call show yet, the color may change
     // } else {
     //   pixels.clear();
     // }
@@ -159,7 +163,7 @@ void loop() {
 
     // If no sync, set the pixel to red
     if( now.tv_sec - lastSync.tv_sec > 60 * 60 * 4 ) {
-      pixels.setPixelColor(0, pixels.Color(150, 0, 0));
+      pixels.setPixelColor(0, COLOR_ERROR );
     }
 
     pixels.show();  
