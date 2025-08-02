@@ -60,6 +60,9 @@ void setup() {
   // E (14621) rmt: rmt_new_tx_channel(269): not able to power down in light sleep
   digitalWrite(PIN_ANTENNA, 0);
 
+  // https://github.com/tzapu/WiFiManager/issues/1426
+  WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
+
   // Connect to WiFi using // https://github.com/tzapu/WiFiManager 
   // If no wifi, start up an SSID called "WWVB" so
   // the user can configure wifi using their phone.
