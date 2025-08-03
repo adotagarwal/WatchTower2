@@ -205,13 +205,13 @@ The connections are quite simple, you can do them on a breadboard or a proto boa
 
 ![PXL_20250728_205028200.jpg](docs/PXL_20250728_205028200.jpg)
 
-Microcontroller board (Adafruit ESP32 QT Py in this photo)
+**Microcontroller board** (Adafruit ESP32 QT Py in this photo)
 
 - Connect the ground pin to the ground plane (photo: J2).
 - Connect the 5V pin to the power plane (photo: J1).
 - Connect your signal pin [M0] to the input pin of your amplifier [AIN1] (photo: J4>J10).
 
-DRV8833 Amplifier breakout
+**DRV8833 Amplifier breakout**
 
 - Connect the second input pin [AIN2] of your amplifier to ground (photo: J11).
 - The Adafruit DRV8833 motor driver board has a sleep pin that needs to be pulled high to enable the breakout, so connect that to power 5v or 3v power, whatever is convenient. We used 5V here. (photo: J12)
@@ -219,7 +219,7 @@ DRV8833 Amplifier breakout
 - [Optional] Connect the “motor” voltage [VM] to your 5V plane (photo: J17). This is needed if you are powering your amplifier via USB like I have here, but it should not be done if you are planning to use an external power supply on VMotor.
 The antenna and amplifier circuit can contribute some noise to your 5V line. If you’re worried about it you might use an external power supply instead, but I found for these settings that the noise was negligible (although see Alternatives Considered for some lessons learned).
 
-Antenna
+**Antenna**
 
 - You can plug your antenna directly into your breadboard, or use a 0.1" Pitch PCB Mount Screw Terminal Block Connector connected to [AOUT1] and [AOUT2] (photo: C11, C12)
 
