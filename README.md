@@ -73,8 +73,9 @@ Like we said in the previous section, we represent a high/low/mark trit by the w
 
 A WWVB date/time is encoded using a few different layers of encoding. At the top is what we think of as a date/time and at the bottom is the 60 kHz carrier wave.
 
-| A date/time is encoded as a… |
+|  |
 | --- |
+| A date/time is encoded as a… |
 | 60-bit frame, using… |
 | 1s PWM trits, on top of a… |
 | 60 kHz 50% duty cycle carrier wave |
