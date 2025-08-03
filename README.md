@@ -158,7 +158,7 @@ Arduino then moves to the loop(), which continuously performs the following oper
 
 Do some other nice-to-haves like logging, setting LEDs and/or rebooting when there are issues.
 
-### Verify microcontroller alone
+### Verify the microcontroller alone
 
 If you installed and ran your software and you set up the wifi connection, your board should now be outputting a signal on your output pin.
 
