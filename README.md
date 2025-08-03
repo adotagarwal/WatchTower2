@@ -106,7 +106,7 @@ None of the following is necessary, but some of it might be nice to have.
 
 ### Software
 
-[TODO link to software]
+https://github.com/emmby/WatchTower
 
 Upload the Arduino sketch to your Arduino using the Arduino IDE.
 
