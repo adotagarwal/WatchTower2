@@ -174,7 +174,7 @@ That’s the 50% duty cycle PWM carrier wave initialized during setup().
 
 If you zoom out to say 1 second per grid square resolution, you’ll be able to see the WWVB signal clearly:
 
-![RigolDS10.png](WWVB%docs/RigolDS10.png)
+![RigolDS10.png](docs/RigolDS10.png)
 
 In the 10 seconds shown here, I see a 1, mark, 0, 1, 1, mark, 1, 1, 1, and 1.
 
