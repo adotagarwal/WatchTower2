@@ -3,9 +3,7 @@
 
 [TODO animated gif image]
 
-[TODO watch tower image - animated?]
-
-![image.png](docs/image.png)
+![](docs/ezgif-4fa5c141cacede.gif)
 
 There are some beautiful radio-controlled watches available these days from Citizen, Seiko, Junghans, and even Casio. These timepieces don’t need fiddling every other month, which is great if you have more than one or two and can never remember what comes after “thirty days hath September…”
 
