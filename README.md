@@ -212,6 +212,10 @@ Or with your oscilloscope, you can look at the output of your microcontroller an
 
 Here the 3V signal on the microcontroller is blue, and you can see that the amplifier is outputting a similar wave but at 5V. If your wave doesn’t look quite like this, check that your antenna is plugged in. The antenna has an impedance that will cause the ringing that you see in the waveform, that’s expected and okay.
 
+The final test is to verify it works with a real watch!
+
+![ezgif-21153c1710707a.gif](docs/ezgif-21153c1710707a.gif)
+
 ### Assembling the enclosure
 
 The enclosure is designed for a 51mm x 63mm perma-proto, which is the size of a half size perma-proto with the excess trimmed. You can trim a proto board by scoring along a straightedge with a utility knife and then bending the board at the score, either by pressing it down on a hard surface at an angle or using a vise grip. Or feel free to modify the Autodesk Fusion file to the size of your own board.
