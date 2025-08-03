@@ -1,8 +1,5 @@
 # The Watch Tower WWVB transmitter
 
-
-[TODO animated gif image]
-
 ![](docs/ezgif-4fa5c141cacede.gif)
 
 There are some beautiful radio-controlled watches available these days from Citizen, Seiko, Junghans, and even Casio. These timepieces don’t need fiddling every other month, which is great if you have more than one or two and can never remember what comes after “thirty days hath September…”
@@ -19,7 +16,7 @@ The FCC requires a license to transmit, but has an [exemption](https://www.law.c
 
 ## About WWVB
 
-The classic WWVB transmits one bit of information per second (1Hz) and takes one minute (60 bits) to transmit a full time and date “word” (window? TODO what do you call this).
+The classic WWVB transmits one bit of information per second (1Hz) and takes one minute (60 bits) to transmit a full time and date “frame".
 
 ### An example
 
@@ -78,7 +75,7 @@ A WWVB date/time is encoded using a few different layers of encoding. At the top
 
 | A date/time is encoded as a… |
 | --- |
-| 60-bit “word,” using… |
+| 60-bit frame, using… |
 | 1s PWM trits, on top of a… |
 | 60 kHz 50% duty cycle carrier wave |
 | 🐢🐢🐢 all the way down |
