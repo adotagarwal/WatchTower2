@@ -221,25 +221,26 @@ The enclosure is designed for a 51mm x 63mm perma-proto, which is the size of a 
 
 Here I also made a quick and dirty “mount” for the antenna by twisting a couple of loops of wire and soldering them to the perma proto.
 
-[TODO Fusion and STL files]
 
 Print the enclosure using a 3D printer. I used standard PLA, standard 0.4mm nozzle, and pretty much default slicer settings with no supports.
 
+
+* STL: [The Watch Tower v7.stl](enclosure/The%20Watch%20Tower%20v7.stl)
+* Autodesk Fusion: [The Watch Tower v7.f3d](enclosure/The%20Watch%20Tower%20v7.f3d)
+
 ![image.png](docs/image%206.png)
 
-[TODO assembly image]
-
-Once the pieces are printed, insert the circuit board into the bottom and press to fit.
+Once the pieces are printed, insert the circuit board into the bottom and press the lid for a snap fit.
 
 ## Enjoy!
 
 Plug into USB and you’re done! Your watches should now sync automatically every night.
 
-[TODO finished image]
+![image.png](docs/image.png)
 
 I reliably get about 8 to 10 inches of signal in a straight line with no obstructions. 
 
-[TODO image]
+[TODO distance tests]
 
 If you need more than that, try giving a higher voltage a try using an external power supply. Or you might try a higher duty cycle or doubling up the H-bridges, but see the warnings below!
 
@@ -249,4 +250,4 @@ If you need more than that, try giving a higher voltage a try using an external 
 - I looked at the **Adafruit 8-Channel PWM or Servo FeatherWing** because I wanted to take advantage of module stacking, but it can only do 10mA per channel and 1.6khz.
 - I looked at Trinket and Itsybitsy ATmega based boards, but they can’t drive much current and they’re not modular with anything and they have no wifi so there’s little advantage over the QT Py.
 - I considered driving the DRV8833 with an external power supply. This would have given me higher voltage and likely a stronger signal. But I wanted the convenience of a single usb power supply, and the signal strength was sufficient for my needs.
-- [WARNING] I tried the linking both the A and B H-bridges of the  DRV8833 in parallel, and I also upped the duty cycle to 80%. Totally blew out my microcontroller, presumably with a flyback voltage due to the high inductance antenna. I’m not sure if it was the parallel or the 80% or the combination of the two, it would be worth experimenting further but I haven’t yet.
+- ⚠️ **WARNING**: I tried the linking both the A and B H-bridges of the  DRV8833 in parallel, and I also upped the duty cycle to 80%. Totally blew out my microcontroller, presumably with a flyback voltage due to the high inductance antenna. I’m not sure if it was the parallel or the 80% or the combination of the two, it would be worth experimenting further but I haven’t yet.
