@@ -92,7 +92,7 @@ Now that you understand how it works, let’s build the transmitter!
 ## Components
 
 - An ESP32-based development board such as the AdaFruit QT Py ESP32, AdaFruit Feather ESP32 v2, Arduino Nano ESP32, Seeed Xiao ESP32C3 or similar. I used the [QT Py ESP32](https://www.adafruit.com/product/5395).
-- An H-bridge amplifier circuit. You can build your own, or I used the [Adafruit DRV8833 DC/Stepper Motor Driver Breakout Board](https://www.notion.so/WWVB-transmitter-23c9460bca16801999d3ca8b4ca0522a?pvs=21). Boards using the TB6612 would probably also work, you just need something that can handle 5V or more, a few hundred milliamps and a switching frequency of 60khz or higher.
+- An H-bridge amplifier circuit. You can build your own, or I used the [Adafruit DRV8833 DC/Stepper Motor Driver Breakout Board](https://www.adafruit.com/product/3297). Boards using the TB6612 would probably also work, you just need something that can handle 5V or more, a few hundred milliamps and a switching frequency of 60khz or higher.
 - A [60khz ferrite rod antenna](https://www.canaduino.ca/product/60khz-atomic-clock-receiver-v4-wwvb-msf-jjy60/). You can pull one from an existing quartz radio-controlled movement, or I bought mine from Canaduino. Some users have had luck with a simple 20 inch length of straight copper wire, but I found the signal to be too weak to be reliable.
 - Bread board and [jumper wires](https://www.amazon.com/dp/B08YRGVYPV).
 - PCB Mount Screw Terminal Block connector to connect your antenna, something like [this](https://www.amazon.com/dp/B09F6TC7RP). Not strictly necessary but nice to have.
