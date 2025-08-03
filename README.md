@@ -6,7 +6,7 @@ There are some beautiful radio-controlled watches available these days from Citi
 
 In the US, these watches work by receiving a 60-bit 1-Hz signal on a 60-kHz carrier wave broadcast from Fort Collins, Colorado called [WWVB](https://en.wikipedia.org/wiki/WWVB). The broadcast is quite strong and generally covers the entire continental US, but some areas of the country can have unreliable reception. I live in the SF Bay Area in an area with high RF noise and my reception can be spotty. My watches sync often enough that it’s not an issue 363 days out of the year, but sometimes they can miss DST shifts for a day or two. The east coast is known to be even more challenging.
 
-Wouldn’t it be great if anyone could set up a little repeater to transmit the time so my watches were always in sync?
+Wouldn’t it be great if anyone could set up a little repeater to transmit the time so their watches were always in sync?
 
 WWVB has been around awhile and there have been various other projects ([1](https://www.instructables.com/WWVB-radio-time-signal-generator-for-ATTINY45-or-A/),[2](https://github.com/anishathalye/micro-wwvb)) that have demonstrated the feasibility of making your own WWVB transmitter. But these all had very limited range. I wanted to build something that could cover my whole watch stand and be based on a more familiar toolset for the typical hobbyist, namely USB-based 32-bit microcontroller development boards, WiFi, and Arduino. My goal was to make something approachable, reliable, and attractive enough it could sit with my watch collection.
 
@@ -225,7 +225,7 @@ Antenna
 
 ### Signal Verification
 
-You should be able to do the same LED trick last time, only this time with the long anode on AOUT1 and the short cathode on AOUT2.
+You should be able to do the same LED trick as last time, only this time with the long anode on AOUT1 and the short cathode on AOUT2.
 
 Or with your oscilloscope, you can look at the output of your microcontroller and compare it to the output of your amplifier:
 
