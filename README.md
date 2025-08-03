@@ -105,6 +105,29 @@ None of the following is necessary, but some of it might be nice to have.
 
 ## Instructions
 
+### Simulator
+
+Before you get started, you might be interested to see a simplified version of the software in action on the Wokwi Arduino online simulator.
+
+[![The Watch Tower on Wokwi](docs/wokwi.png)](https://wokwi.com/projects/431240334467357697)
+https://wokwi.com/projects/431240334467357697
+
+This simulator connects a virtual Arduino to a virtual logic analyser on PIN 4, and lets you download the output
+of PIN 4 for offline viewing on your computer.
+
+To use it:
+
+- Run the simulator for a few seconds. Notice that D0 is
+  flashing on the logic analyzer. The logs will also show
+  the current date/time (which starts at Jan 1 1970 since
+  we aren't using wifi to initialize it to another value)
+- Stop the simulator. The logic analyzer will automatically
+  download `wokwi-logic.vcd` to your computer.
+- Open `wokwi-logic.vcd` in a viewer like [PulseView](https://sigrok.org/wiki/PulseView)
+
+
+
+
 ### Software
 
 https://github.com/emmby/WatchTower
