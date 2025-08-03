@@ -69,9 +69,15 @@ Like we said in the previous section, we represent a high/low/mark trit by the w
  
  <img src="docs/dutycycle.png" width=400>
 
-### Summary: The layers of WWVB
+ So what you'll expect to see when you're transmitting a WWVB "mark" is a 1s pulse where half of the pulse is "high" using a 60 kHz signal at 50% duty, and the other half is "low" with a 0% duty (not to scale):
 
-A WWVB date/time is encoded using a few different layers of encoding. At the top is what we think of as a date/time and at the bottom is the 60 kHz carrier wave.
+ ![mark](docs/mark.png)
+
+ Similarly, a 0 would be a 60 kHz 50% duty cycle for 0.2s, followed by a 0% duty cycle for 0.8s. And a 1 would be the reverse.
+
+### The layers of WWVB
+
+In summary, a WWVB date/time is encoded using a few different layers of encoding. At the top is what we think of as a date/time and at the bottom is the 60 kHz carrier wave.
 
 |  |
 | --- |
