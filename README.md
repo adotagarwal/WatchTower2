@@ -67,7 +67,7 @@ There’s one more part of the signal that needs explanation. While we’re tran
 
 Like we said in the previous section, we represent a high/low/mark trit by the width of our pulse. High for 200ms is a zero, high for 500ms is a 1, high for 800ms is a mark. The way we’ll do that on our 60 kHz carrier wave is by using PWM again, but this time on the 60 kHz signal instead of on the 1 Hz signal. We’ll use a duty cycle of 50% to represent high, which means that half of our 60 kHz pulse is high and half is low. We’ll use a duty cycle of 0% to represent low which effectively means the whole pulse is low.
 
-<img src="docs/dutycycle.png" width=200>
+<img src="docs/dutycycle.png" width=300>
 
 ### Summary: The layers of WWVB
 
