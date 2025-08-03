@@ -134,7 +134,7 @@ void loop() {
   // buf_now_utc.tm_min = buf_now_local.tm_min = (buf_now_utc.tm_min + 30) % 60;
   // or set the date to dec 31
   // buf_now_utc.tm_yday = buf_now_local.tm_yday = 365;
-  // or set the time randomly ever 10 minutes
+  // or set the time randomly every 10 minutes
   // int mod_min = buf_now_utc.tm_min % 10;
   // randomSeed(buf_now_utc.tm_min / 10); // pick a new random time every 10m
   // buf_now_utc.tm_hour = buf_now_local.tm_hour = random(0,24);
