@@ -57,7 +57,7 @@ Coming back to that original example but just focusing on the Minutes section, y
 
 ![image.png](docs/image%202.png)
 
-Light blue is high and dark blue is low [TODO colors]. You can see second 00 is 80% dark blue (low), which means it’s a “mark”.  Second 01 is 20% dark blue, so it’s a 0. Second 02 is 50% dark blue so it’s a 1, and so on.
+<span style="background-color: #07FEFF;">Light blue</span> is high and <span style="background-color: #0001FC; color: white;">dark blue</span> is low. You can see second 00 is 80% dark blue (low), which means it’s a “mark”.  Second 01 is 20% dark blue, so it’s a 0. Second 02 is 50% dark blue so it’s a 1, and so on.
 
 So now you know how to encode the time and date using WWVB!
 
