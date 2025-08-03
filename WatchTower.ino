@@ -1,12 +1,17 @@
-// Derived from https://github.com/anishathalye/micro-wwvb/blob/master/src/microwwvb.c
-// https://www.instructables.com/WWVB-radio-time-signal-generator-for-ATTINY45-or-A/
-// https://en.wikipedia.org/wiki/WWVB
-// https://www.nist.gov/pml/time-and-frequency-division/time-distribution/radio-station-wwvb/wwvb-time-code-format
-//
-// Simulator: https://wokwi.com/projects/431240334467357697
+// TODO move to readme
+// Online simulator: https://wokwi.com/projects/431240334467357697
 //      (make sure to comment out the wifi bits)
 //      (may also need to change the antenna pin)
+//      (run the simulator and stop it, and download the logic analyser output and view in something like PulseView)
+
 //
+// INSTRUCTIONS
+// - set the PIN_ANTENNA to desired output pin
+// - set the timezone as desired
+// - download and run the code on your device
+// - connect your phone to "WWVB" to set the wifi config for the device
+
+// TODO reboot daily in case of wifi issues
 
 #include <WiFiManager.h>
 #include <Adafruit_NeoPixel.h>
@@ -24,6 +29,7 @@ const int KHZ_60 = 60000;
 
 // Set to your timezone.
 // This is needed for computing DST if applicable
+// https://gist.github.com/alwynallan/24d96091655391107939
 const char *timezone = "PST8PDT,M3.2.0,M11.1.0"; // America/Los_Angeles
 const char* ntpServer = "pool.ntp.org";
 
