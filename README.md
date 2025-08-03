@@ -57,7 +57,7 @@ Coming back to that original example but just focusing on the Minutes section, y
 
 ![image.png](docs/image%202.png)
 
-![#07FEFF](https://placehold.co/15x15/07FEFF/07FEFF.png) `Light blue` is high and ![#0001FC](https://placehold.co/15x15/0001FC/0001FC.png) `dark blue` is low. You can see second 00 is 80% dark blue (low), which means it’s a “mark”.  Second 01 is 20% dark blue, so it’s a 0. Second 02 is 50% dark blue so it’s a 1, and so on.
+![#07FEFF](https://placehold.co/15x15/07FEFF/07FEFF.png) `Light blue` is high and ![#0001FC](https://placehold.co/15x15/0001FC/0001FC.png) `Dark blue` is low. You can see second 00 is 80% dark blue (low), which means it’s a “mark”.  Second 01 is 20% dark blue, so it’s a 0. Second 02 is 50% dark blue so it’s a 1, and so on.
 
 So now you know how to encode the time and date using WWVB!
 
