@@ -16,7 +16,7 @@ The FCC requires a license to transmit, but has an [exemption](https://www.law.c
 
 ## About WWVB
 
-The classic WWVB transmits one bit of information per second (1Hz) and takes one minute (60 bits) to transmit a full time and date “frame".
+The classic WWVB transmits one bit of information per second (1Hz) and takes one minute (60 bits) to transmit a full time and date frame.
 
 ### An example
 
