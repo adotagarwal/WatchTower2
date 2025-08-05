@@ -37,6 +37,7 @@ WiFiManager wifiManager;
 Adafruit_NeoPixel pixels(1, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
 bool logicValue = 0; // TODO rename
 struct timeval lastSync;
+int lastRebootYday;
 
 const uint32_t COLOR_READY = pixels.Color(0, 60, 0);
 const uint32_t COLOR_LOADING = pixels.Color(32, 20, 0);
@@ -96,6 +97,9 @@ void setup() {
 
   // Start the 60khz carrier signal using 8-bit (0-255) resolution
   ledcAttach(PIN_ANTENNA, KHZ_60, 8);
+
+  // Set the last reboot time
+  lastRebootYday = timeinfo.tm_yday;
 
   // green means go
   pixels.setPixelColor(0, COLOR_READY );
@@ -175,7 +179,12 @@ void loop() {
     strftime(lastSyncStringBuff, sizeof(lastSyncStringBuff), "%b %d %Y %H:%M", &buf_lastSync);
     Serial.printf("%s.%03d (%s) [last sync %s]: %s\n",timeStringBuff, now.tv_usec/1000, buf_now_local.tm_isdst ? "DST" : "STD", lastSyncStringBuff, logicValue ? "1" : "0");
 
-    // If no sync, set the pixel to red
+    // Reboot once a day at 5pm
+    if( lastRebootYday != buf_now_local.tm_yday && buf_now_local.tm_hour >= 17) {
+      forceReboot();
+    }
+
+    // If no sync in last 4h, set the pixel to red
     if( now.tv_sec - lastSync.tv_sec > 60 * 60 * 4 ) {
       pixels.setPixelColor(0, COLOR_ERROR );
     }
