@@ -99,7 +99,11 @@ void setup() {
   ledcAttach(PIN_ANTENNA, KHZ_60, 8);
 
   // Set the last reboot time
-  lastRebootYday = timeinfo.tm_yday;
+  struct timeval now;  
+  struct tm buf_now;
+  gettimeofday(&now,NULL);
+  localtime_r(&now.tv_sec, &buf_now);
+  lastRebootYday = buf_now.tm_yday;
 
   // green means go
   pixels.setPixelColor(0, COLOR_READY );
