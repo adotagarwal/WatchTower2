@@ -270,9 +270,61 @@ Plug into USB and you’re done! Your watches should now sync automatically ever
 
 I reliably get about 8 to 10 inches of signal in a straight line with no obstructions. 
 
-[TODO distance tests]
+If you need more than that, try giving a higher voltage a try using an external power supply.
 
-If you need more than that, try giving a higher voltage a try using an external power supply. Or you might try a higher duty cycle or doubling up the H-bridges, but see the warnings below!
+[TODO talk about second antenna]
+
+
+## Signal strength
+
+### How does distance affect signal strength?
+
+You probably expect the signal to decrease as you get further away from the tower, but you might be surprised by how quickly the signal disappears.
+
+The "inverse square law" tells us that RF signal strength decreases with the square of the distance. We can measure our signal strength using our oscilloscope, a second antenna, and a ruler.
+
+![signal strength at 1 inch setup](docs/signal-strength-1in.jpg)
+
+At one inch, our signal strength looks pretty solid! You can see that our 5V antenna square wave (yellow) is inducing a 16V sinusoidal wave in our receiving antenna. It's a little counter-intuitive that the receiving amplitude would be larger than the sending amplitude, but RF physics is beyond the scope of this README. Which is another way of saying 🤷.
+
+![signal strength at 1 inch](docs/RigolDS42.png)
+
+Here are my readings as I move the receiver antenna further out. As expected, the amplitude decreases by roughly 4X as the distance doubles. There's some variation, likely because I wasn't careful about orientation.
+
+| Distance | Amplitude |
+|----|---|
+| 1" | 24.2V |
+| 2" | 6.7V |
+| 4" | 1.2V |
+| 8" | 165mV |
+| 16" | 27mV |
+
+When you zoom out, the one second pulses are still clearly distinguishable to the human eye, but it gets harder and harder as you get further away.
+
+![alt text](docs/RigolDS47.png)
+
+This is all fine and good, but seeing a wave on an oscilloscope doesn't necessarily mean the watch can pick it up. We'll get into that shortly.
+
+
+### How does orientation affect signal strength?
+
+Quite a lot!
+TODO
+
+### Does the enclosure affect signal strength?
+
+No, plastic enclosures have a negligible effect on signal strength.
+TODO
+
+
+### How far out can my watch pick up the signal?
+
+Watches vary in terms of their antenna design, their enclosures, antenna orientation, signal-to-noise filtering, etc.
+
+I tested with a Junghans Form Mega 058/4930.00 (Seiko movement) and a Casio Lineage LIW-M700D (Casio movement). In practice 
+
+
+
 
 ## Alternatives considered
 
