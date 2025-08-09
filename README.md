@@ -268,11 +268,13 @@ Plug into USB and you’re done! Your watches should now sync automatically ever
 
 ![image.png](docs/image.png)
 
-I reliably get about 8 to 10 inches of signal in a straight line with no obstructions. 
+I get about 8 to 10 inches of signal in a straight line with no obstructions. 
 
-If you need more than that, try giving a higher voltage a try using an external power supply.
+If you need more than that, I recommend adding a second antenna at a 90 degree orientation from the first. You won't get a more powerful signal, but by having a second signal at a 90 degree orientiation you significanly increase the chance that your watches will be able to pick up a signal (see the section on antenna orientation below). The amplifier can easily handle two antennas.
 
-[TODO talk about second antenna]
+You can use the same terminal block you're using for the first antenna, just lightly solder the two antennas together and then plug them into the terminal block. The STL has optional components to mount the second antenna.
+
+If you still need more power, try giving a higher voltage a try using an external power supply to your amplifier.
 
 
 ## Signal strength
@@ -289,15 +291,16 @@ At one inch, our signal strength looks pretty solid! You can see that our 5V ant
 
 ![signal strength at 1 inch](docs/RigolDS42.png)
 
-Here are my readings as I move the receiver antenna further out. As expected, the amplitude decreases by roughly 4X as the distance doubles. There's some variation, likely because I wasn't careful about orientation.
+Here are my readings as I move the receiver antenna further out. As expected, the amplitude decreases by roughly 4X as the distance doubles. 
 
 | Distance | Amplitude |
 |----|---|
 | 1" | 24.2V |
 | 2" | 6.7V |
 | 4" | 1.2V |
-| 8" | 165mV |
-| 16" | 27mV |
+| 8" | 301mV |
+| 16" | 93mV |
+| 32" | 28mV |
 
 When you zoom out, the one second pulses are still clearly distinguishable to the human eye, but it gets harder and harder as you get further away.
 
@@ -309,21 +312,43 @@ This is all fine and good, but seeing a wave on an oscilloscope doesn't necessar
 ### How does orientation affect signal strength?
 
 Quite a lot!
-TODO
+
+Turning the receiver antenna 90 degrees drops the signal by 75%!
+
+![rotation](docs/RigolDS48.png)
+
+Most watches receive their strongest signal through the watch face. For the best reception you should point your watch toward the tower (or toward Colorado). This may make more of a difference than a few inches of distance.
+
+This doesn't matter for watches on the stand where the signal is strong, but it can make a difference for watches that are further away.
 
 ### Does the enclosure affect signal strength?
 
-No, plastic enclosures have a negligible effect on signal strength.
-TODO
+Plastic enclosures have a negligible effect on signal strength. The Watch Tower enclosure printed using generic PLA has maybe 5% or less of an impact on signal strength. Again, a few degrees of orientation will have a larger effect than an enclosure.
 
+|||
+|-|-|
+|No enclosure   | 1.02V |
+|Base           | 952mV |
+|Fully enclosed | 987mV |
 
-### How far out can my watch pick up the signal?
+### How far away can my watch pick up the signal?
 
 Watches vary in terms of their antenna design, their enclosures, antenna orientation, signal-to-noise filtering, etc.
 
-I tested with a Junghans Form Mega 058/4930.00 (Seiko movement) and a Casio Lineage LIW-M700D (Casio movement). In practice 
+I tested with a Junghans Max Bill Mega Solar 59/2021.02 (Seiko movement) and a Casio Lineage LIW-M700D (Casio movement). In practice, the orientation of your watch will probably have orders of magnitude more influence on your reception than the model of your watch.
 
+I made five attempts with each watch at a distance of 9" with the antenna and the watch both flat on the surface. To minimize interference from Fort Collins, I placed everything inside a poor man's faraday cage (a stainless steel stock pot with a tight lid, which Gemini tells me is reasonably effective at blocking 60 kHz signals). For each attempt, I gave the watch 5 minutes to try to set the time before I lifted the lid. 
 
+![clock in a pot](docs/PXL_20250809_195931921.jpg)
+
+| Model   ||||||
+|---------|-----|-|-|-|-|
+| Casio   | Yes | No | Yes | Yes | Yes |
+| Junghans| Yes | Yes | Yes | Yes | Yes |
+
+Outcome: ~90% success at 9"
+
+In practice, I've found that watches on the Watch Tower will reliably sync every time, and most watches on my nearby watch stand will also sync most of the time. As a next step I may consider adding more towers to the Watch Tower to bring my whole collection closer to the antenna.
 
 
 ## Alternatives considered
