@@ -60,6 +60,9 @@ void time_sync_notification_cb(struct timeval *tv) {
   lastSync = *tv;
 }
 
+// A callback that is called when the device
+// starts up an access point for wifi configuration.
+// This is called when the device cannot connect to wifi.
 void accesspointCallback(WiFiManager*) {
   Serial.println("Connect to WWVB with another device to set wifi configuration.");
   display.clearDisplay();
