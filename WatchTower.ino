@@ -184,9 +184,11 @@ void loop() {
       forceReboot();
     }
 
-    // If no sync in last 4h, set the pixel to red
+    // If no sync in last 4h, set the pixel to red and reboot
     if( now.tv_sec - lastSync.tv_sec > 60 * 60 * 4 ) {
       pixels.setPixelColor(0, COLOR_ERROR );
+      delay(3000);
+      forceReboot();
     }
 
     pixels.show();  
