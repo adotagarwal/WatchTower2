@@ -221,16 +221,19 @@ void loop() {
     // update the optional I2c display for debugging
     // Does nothing if no display connected
     long uptime = millis()/1000;
-    char line1Buf[100], line2Buf[100];
+    char line1Buf[100], line2Buf[100], line4Buf[100];
     strftime(line1Buf, sizeof(line1Buf), "%I:%M %p", &buf_now_local);
     strftime(line2Buf, sizeof(line2Buf), "%b %d", &buf_now_local);
+    strftime(line4Buf, sizeof(line4Buf), "%b %d %H:%M", &buf_lastSync);
     display.clearDisplay();
     display.setTextSize(2);
     display.setCursor(0, 0);     // Start at top-left corner
     display.println(line1Buf);
     display.println(line2Buf);
     display.setTextSize(1);
-    display.printf("Uptime: %ld secs", uptime);
+    display.println("");
+    display.printf("Uptime: %ld secs\n", uptime);
+    display.printf("Sync: %s\n", line4Buf);
     display.display();    
 
     // Reboot once a day at noon to address any wifi hiccoughs.
