@@ -220,19 +220,21 @@ void loop() {
 
     // update the optional I2c display for debugging
     // Does nothing if no display connected
-    char line1Buf[100];
-    strftime(line1Buf, sizeof(line1Buf), "%b %d %Y %H:%M", &buf_now_local);
+    long uptime = millis()/1000;
+    char line1Buf[100], line2Buf[100];
+    strftime(line1Buf, sizeof(line1Buf), "%I:%M %p", &buf_now_local);
+    strftime(line2Buf, sizeof(line2Buf), "%b %d", &buf_now_local);
     display.clearDisplay();
-    display.setTextSize(1);      // Normal 1:1 pixel scale
-    display.setTextColor(SSD1306_WHITE); // Draw white text
+    display.setTextSize(2);
     display.setCursor(0, 0);     // Start at top-left corner
-    display.cp437(true);         // Use full 256 char 'Code Page 437' font
     display.println(line1Buf);
+    display.println(line2Buf);
+    display.setTextSize(1);
+    display.printf("Uptime: %ld secs", uptime);
     display.display();    
 
     // Reboot once a day at noon to address any wifi hiccoughs.
     // (specifically, reboot any time after 12pm as long as it's been at least 20 hours since the last reboot)
-    long uptime = millis()/1000;
     if( uptime > 20*60*60  && buf_now_local.tm_hour >= 12) {
       Serial.println("Initiating daily reboot");
       delay(1000);
