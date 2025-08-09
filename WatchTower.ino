@@ -32,6 +32,7 @@ WiFiManager wifiManager;
 Adafruit_NeoPixel pixels(1, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
 bool logicValue = 0; // TODO rename
 struct timeval lastSync;
+bool displayConnected = false;
 
 const uint32_t COLOR_READY = pixels.Color(0, 60, 0);
 const uint32_t COLOR_LOADING = pixels.Color(32, 20, 0);
@@ -84,18 +85,25 @@ void setup() {
 
   // Initialize optional I2c display
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
-  display.setTextSize(1);      // Normal 1:1 pixel scale
-  display.setTextColor(SSD1306_WHITE); // Draw white text
-  display.cp437(true);         // Use full 256 char 'Code Page 437' font
+
+  // Test if there's a display connected.
+  Wire.beginTransmission(SCREEN_ADDRESS);
+  displayConnected = Wire.endTransmission () == 0;
+
+  if( displayConnected ) {
+    display.setTextSize(1);      // Normal 1:1 pixel scale
+    display.setTextColor(SSD1306_WHITE); // Draw white text
+    display.cp437(true);         // Use full 256 char 'Code Page 437' font
+
+    display.clearDisplay();
+    display.setCursor(0, 0);     // Start at top-left corner
+    display.println("Connecting...");
+    display.display();
+  }
 
   // hack for this on esp32 qt py?
   // E (14621) rmt: rmt_new_tx_channel(269): not able to power down in light sleep
   digitalWrite(PIN_ANTENNA, 0);
-
-  display.clearDisplay();
-  display.setCursor(0, 0);     // Start at top-left corner
-  display.println("Connecting...");
-  display.display();
 
   // https://github.com/tzapu/WiFiManager/issues/1426
   WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
@@ -106,10 +114,12 @@ void setup() {
   wifiManager.setAPCallback(accesspointCallback);
   wifiManager.autoConnect("WWVB");
 
-  display.clearDisplay();
-  display.setCursor(0, 0);     // Start at top-left corner
-  display.println("Syncing time...");
-  display.display();
+  if( displayConnected ) {
+    display.clearDisplay();
+    display.setCursor(0, 0);     // Start at top-left corner
+    display.println("Syncing time...");
+    display.display();
+  }
 
   // Connect to network time server
   // By default, it will resync every hour
@@ -212,23 +222,27 @@ void loop() {
     strftime(lastSyncStringBuff, sizeof(lastSyncStringBuff), "%b %d %Y %H:%M", &buf_lastSync);
     Serial.printf("%s.%03d (%s) [last sync %s]: %s\n",timeStringBuff, now.tv_usec/1000, buf_now_local.tm_isdst ? "DST" : "STD", lastSyncStringBuff, logicValue ? "1" : "0");
 
+    long uptime = millis()/1000;
+
     // update the optional I2c display for debugging
     // Does nothing if no display connected
-    long uptime = millis()/1000;
-    char line1Buf[100], line2Buf[100], line4Buf[100];
-    strftime(line1Buf, sizeof(line1Buf), "%I:%M %p", &buf_now_local);
-    strftime(line2Buf, sizeof(line2Buf), "%b %d", &buf_now_local);
-    strftime(line4Buf, sizeof(line4Buf), "%b %d %H:%M", &buf_lastSync);
-    display.clearDisplay();
-    display.setTextSize(2);
-    display.setCursor(0, 0);     // Start at top-left corner
-    display.println(line1Buf);
-    display.println(line2Buf);
-    display.setTextSize(1);
-    display.println("");
-    display.printf("Uptime: %ld secs\n", uptime);
-    display.printf("Sync: %s\n", line4Buf);
-    display.display();    
+    if (displayConnected) {
+      char line1Buf[100], line2Buf[100], line4Buf[100];
+      strftime(line1Buf, sizeof(line1Buf), "%I:%M %p", &buf_now_local);
+      strftime(line2Buf, sizeof(line2Buf), "%b %d", &buf_now_local);
+      strftime(line4Buf, sizeof(line4Buf), "%b %d %H:%M", &buf_lastSync);
+      display.clearDisplay();
+      display.setTextSize(2);
+      display.setCursor(0, 0);     // Start at top-left corner
+      display.println(line1Buf);
+      display.println(line2Buf);
+      display.setTextSize(1);
+      display.println("");
+      display.printf("Uptime: %ld secs\n", uptime);
+      display.printf("Sync: %s\n", line4Buf);
+      display.display();
+    }
+
 
     // Reboot once a day at noon to address any wifi hiccoughs.
     // (specifically, reboot any time after 12pm as long as it's been at least 20 hours since the last reboot)
