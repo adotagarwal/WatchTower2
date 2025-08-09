@@ -69,6 +69,16 @@ void time_sync_notification_cb(struct timeval *tv) {
   lastSync = *tv;
 }
 
+void accesspointCallback(WiFiManager*) {
+  Serial.println("Connect to WWVB with another device to set wifi configuration.");
+  display.clearDisplay();
+  display.setCursor(0, 0);     // Start at top-left corner
+  display.println("Connect to WWVB");
+  display.println("with your phone");
+  display.println("to configure WiFi.");
+  display.display();
+}
+
 void setup() {
   Serial.begin(115200);
   delay(1000);
@@ -99,6 +109,7 @@ void setup() {
   // Connect to WiFi using // https://github.com/tzapu/WiFiManager 
   // If no wifi, start up an SSID called "WWVB" so
   // the user can configure wifi using their phone.
+  wifiManager.setAPCallback(accesspointCallback);
   wifiManager.autoConnect("WWVB");
 
   display.clearDisplay();
