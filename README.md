@@ -255,12 +255,12 @@ Here I also made a quick and dirty “mount” for the antenna by twisting a cou
 Print the enclosure using a 3D printer. I used standard PLA, standard 0.4mm nozzle, and pretty much default slicer settings with no supports.
 
 
-* STL: [The Watch Tower v7.stl](enclosure/The%20Watch%20Tower%20v7.stl)
-* Autodesk Fusion: [The Watch Tower v7.f3d](enclosure/The%20Watch%20Tower%20v7.f3d)
+* STL: [The Watch Tower v15.stl](enclosure/The%20Watch%20Tower%20v15.stl)
+* Autodesk Fusion: [The Watch Tower v15.f3d](enclosure/The%20Watch%20Tower%20v15.f3d)
 
 ![image.png](docs/image%206.png)
 
-Once the pieces are printed, insert the circuit board into the bottom and press the lid for a snap fit.
+Insert the circuit board into the base. If you have a second antenna, place the two-piece antenna stand inside the base, making sure to route your antenna wires through the notch in the "C" shaped antenna support. You can skip this step if you only have one antenna. Then press the lid for a snap fit.
 
 ## Enjoy!
 
