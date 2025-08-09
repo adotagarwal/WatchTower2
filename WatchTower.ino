@@ -80,11 +80,18 @@ void setup() {
 
   // Initialize optional I2c display
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
-  display.clearDisplay();
+  display.setTextSize(1);      // Normal 1:1 pixel scale
+  display.setTextColor(SSD1306_WHITE); // Draw white text
+  display.cp437(true);         // Use full 256 char 'Code Page 437' font
 
   // hack for this on esp32 qt py?
   // E (14621) rmt: rmt_new_tx_channel(269): not able to power down in light sleep
   digitalWrite(PIN_ANTENNA, 0);
+
+  display.clearDisplay();
+  display.setCursor(0, 0);     // Start at top-left corner
+  display.println("Connecting...");
+  display.display();
 
   // https://github.com/tzapu/WiFiManager/issues/1426
   WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
@@ -93,6 +100,11 @@ void setup() {
   // If no wifi, start up an SSID called "WWVB" so
   // the user can configure wifi using their phone.
   wifiManager.autoConnect("WWVB");
+
+  display.clearDisplay();
+  display.setCursor(0, 0);     // Start at top-left corner
+  display.println("Syncing time...");
+  display.display();
 
   // Connect to network time server
   // By default, it will resync every hour
