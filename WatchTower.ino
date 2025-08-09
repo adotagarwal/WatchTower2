@@ -175,9 +175,12 @@ void loop() {
     strftime(lastSyncStringBuff, sizeof(lastSyncStringBuff), "%b %d %Y %H:%M", &buf_lastSync);
     Serial.printf("%s.%03d (%s) [last sync %s]: %s\n",timeStringBuff, now.tv_usec/1000, buf_now_local.tm_isdst ? "DST" : "STD", lastSyncStringBuff, logicValue ? "1" : "0");
 
-    // Reboot once a day at 5pm
-    // (specifically, reboot any time after 5pm as long as it's been at least 20 hours since the last reboot)
-    if( millis()*1000 > 20*60*60  && buf_now_local.tm_hour >= 17) {
+    // Reboot once a day at noon to address any wifi hiccoughs.
+    // (specifically, reboot any time after 12pm as long as it's been at least 20 hours since the last reboot)
+    long uptime = millis()/1000;
+    if( uptime > 20*60*60  && buf_now_local.tm_hour >= 12) {
+      Serial.println("Initiating daily reboot");
+      delay(1000);
       forceReboot();
     }
 
