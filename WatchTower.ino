@@ -1,17 +1,8 @@
-// TODO move to readme
-// Online simulator: https://wokwi.com/projects/431240334467357697
-//      (make sure to comment out the wifi bits)
-//      (may also need to change the antenna pin)
-//      (run the simulator and stop it, and download the logic analyser output and view in something like PulseView)
-
-//
 // INSTRUCTIONS
 // - set the PIN_ANTENNA to desired output pin
 // - set the timezone as desired
 // - download and run the code on your device
 // - connect your phone to "WWVB" to set the wifi config for the device
-
-// TODO reboot daily in case of wifi issues
 
 #include <WiFiManager.h>
 #include <Adafruit_NeoPixel.h>
