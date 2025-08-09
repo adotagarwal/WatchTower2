@@ -15,6 +15,10 @@
 
 #include <WiFiManager.h>
 #include <Adafruit_NeoPixel.h>
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 #include "time.h"
 #include "esp_sntp.h"
 
@@ -43,6 +47,18 @@ const uint32_t COLOR_LOADING = pixels.Color(32, 20, 0);
 const uint32_t COLOR_ERROR = pixels.Color(150, 0, 0);
 const uint32_t COLOR_TRANSMIT = pixels.Color(32, 20, 0);
 
+
+// Optional I2c display 
+// https://www.adafruit.com/product/326
+// Does nothing if no display present.
+// Can be removed if not using.
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+#define SCREEN_ADDRESS 0x3D /// See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+
 // A tricky way to force arduino to reboot
 // by accessing a protected memory address
 void(* forceReboot) (void) = 0;
@@ -56,11 +72,15 @@ void time_sync_notification_cb(struct timeval *tv) {
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+  pixels.begin();
 
   pinMode(PIN_ANTENNA, OUTPUT);
   pixels.setPixelColor(0, COLOR_LOADING );
   pixels.show();
+
+  // Initialize optional I2c display
+  display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
+  display.clearDisplay();
 
   // hack for this on esp32 qt py?
   // E (14621) rmt: rmt_new_tx_channel(269): not able to power down in light sleep
@@ -174,6 +194,18 @@ void loop() {
     localtime_r(&lastSync.tv_sec, &buf_lastSync);
     strftime(lastSyncStringBuff, sizeof(lastSyncStringBuff), "%b %d %Y %H:%M", &buf_lastSync);
     Serial.printf("%s.%03d (%s) [last sync %s]: %s\n",timeStringBuff, now.tv_usec/1000, buf_now_local.tm_isdst ? "DST" : "STD", lastSyncStringBuff, logicValue ? "1" : "0");
+
+    // update the optional I2c display for debugging
+    // Does nothing if no display connected
+    char line1Buf[100];
+    strftime(line1Buf, sizeof(line1Buf), "%b %d %Y %H:%M", &buf_now_local);
+    display.clearDisplay();
+    display.setTextSize(1);      // Normal 1:1 pixel scale
+    display.setTextColor(SSD1306_WHITE); // Draw white text
+    display.setCursor(0, 0);     // Start at top-left corner
+    display.cp437(true);         // Use full 256 char 'Code Page 437' font
+    display.println(line1Buf);
+    display.display();    
 
     // Reboot once a day at noon to address any wifi hiccoughs.
     // (specifically, reboot any time after 12pm as long as it's been at least 20 hours since the last reboot)
