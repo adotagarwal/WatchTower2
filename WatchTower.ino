@@ -467,16 +467,18 @@ static inline int is_leap_year(int year) {
 }
 
 static inline void updateOptionalDisplay(const char* line1, const char* line2, const char* line3, const char* line4) {
-      display.clearDisplay();
-      display.setTextSize(2);
-      display.setCursor(0, 0);     // Start at top-left corner
-      display.println(line1 != NULL ? line1 : "");
-      display.println(line2 != NULL ? line2 : "");
-      display.setTextSize(1);
-      display.println("");
-      display.println(line3 != NULL ? line3 : "");
-      display.println(line4 != NULL ? line4 : "");
-      display.display();
+  if( !displayConnected ) 
+    return;
 
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setCursor(0, 0);     // Start at top-left corner
+  display.println(line1 != NULL ? line1 : "");
+  display.println(line2 != NULL ? line2 : "");
+  display.setTextSize(1);
+  display.println("");
+  display.println(line3 != NULL ? line3 : "");
+  display.println(line4 != NULL ? line4 : "");
+  display.display();
 }
 
