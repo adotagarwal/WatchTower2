@@ -66,12 +66,7 @@ void time_sync_notification_cb(struct timeval *tv) {
 // This is called when the device cannot connect to wifi.
 void accesspointCallback(WiFiManager*) {
   Serial.println("Connect to WWVB with another device to set wifi configuration.");
-  display.clearDisplay();
-  display.setCursor(0, 0);     // Start at top-left corner
-  display.println("Connect to WWVB");
-  display.println("with your phone");
-  display.println("to configure WiFi.");
-  display.display();
+  updateOptionalDisplay("SSID: WWVB", NULL, "Use your phone", "to setup WiFi.");
 }
 
 void setup() {
@@ -95,10 +90,7 @@ void setup() {
     display.setTextColor(SSD1306_WHITE); // Draw white text
     display.cp437(true);         // Use full 256 char 'Code Page 437' font
 
-    display.clearDisplay();
-    display.setCursor(0, 0);     // Start at top-left corner
-    display.println("Connecting...");
-    display.display();
+    updateOptionalDisplay(NULL, NULL, NULL, "Connecting...");
   }
 
   // hack for this on esp32 qt py?
@@ -114,12 +106,7 @@ void setup() {
   wifiManager.setAPCallback(accesspointCallback);
   wifiManager.autoConnect("WWVB");
 
-  if( displayConnected ) {
-    display.clearDisplay();
-    display.setCursor(0, 0);     // Start at top-left corner
-    display.println("Syncing time...");
-    display.display();
-  }
+  updateOptionalDisplay(NULL, NULL, NULL, "Syncing time...");
 
   // Connect to network time server
   // By default, it will resync every hour
