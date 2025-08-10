@@ -80,8 +80,6 @@ void setup() {
 
   // Initialize optional I2c display
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
-
-  // Test if there's a display connected.
   Wire.beginTransmission(SCREEN_ADDRESS);
   displayConnected = Wire.endTransmission () == 0;
 
@@ -110,7 +108,6 @@ void setup() {
 
   // Connect to network time server
   // By default, it will resync every hour
-  // Register a callback to be informed when we sync
   sntp_set_time_sync_notification_cb(time_sync_notification_cb);
   configTime(0, 0, ntpServer);
   struct tm timeinfo;
@@ -123,9 +120,9 @@ void setup() {
   }
   Serial.println("Got the time from NTP");
 
-  // Now we can set the real timezone.
+  // Now set the timezone.
   // We broadcast in UTC, but we need the timezone for the is_dst bit
-  setenv("TZ",timezone,1);  //  Now adjust the TZ.  Clock settings are adjusted to show the new local time
+  setenv("TZ",timezone,1);
   tzset();
 
   // Start the 60khz carrier signal using 8-bit (0-255) resolution
@@ -164,11 +161,13 @@ void loop() {
 
   gmtime_r(&now.tv_sec, &buf_now_utc); 
 
+  // compute start of today for dst
   struct timeval today_start = now;
   today_start.tv_usec = 0;
   today_start.tv_sec = (today_start.tv_sec / 86400) * 86400; // This is not exact but close enough
   localtime_r(&today_start.tv_sec, &buf_today_start);
 
+  // compute start of tomorrow for dst
   struct timeval tomorrow_start = now;
   tomorrow_start.tv_usec = 0;
   tomorrow_start.tv_sec = ((tomorrow_start.tv_sec / 86400) + 1) * 86400; // again, close enough
