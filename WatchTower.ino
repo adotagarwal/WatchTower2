@@ -164,7 +164,7 @@ void loop() {
 
   // DEBUGGING Optionally muck with buf_now_local
   // to make it easier to see if your watch has been set
-  if (false) {
+  if (true) {
     // Set the date to Dec 31
     buf_now_local.tm_mon = 11;
     buf_now_local.tm_mday = 31;
@@ -222,26 +222,20 @@ void loop() {
     Serial.printf("%s.%03d (%s) [last sync %s]: %s\n",timeStringBuff, now.tv_usec/1000, buf_now_local.tm_isdst ? "DST" : "STD", lastSyncStringBuff, logicValue ? "1" : "0");
 
     long uptime = millis()/1000;
+    char line1Buf[100], line2Buf[100], line3Buf[100], line4Buf[100];
+    strftime(line1Buf, sizeof(line1Buf), "%I:%M %p", &buf_now_local);
+    strftime(line2Buf, sizeof(line2Buf), "%b %d", &buf_now_local);
+    sprintf(line3Buf, "Uptime: %ld secs\n", uptime);
+    strftime(line4Buf, sizeof(line4Buf), "Sync: %b %d %H:%M", &buf_lastSync);
 
     // update the optional I2c display for debugging
     // Does nothing if no display connected
-    if (displayConnected) {
-      char line1Buf[100], line2Buf[100], line4Buf[100];
-      strftime(line1Buf, sizeof(line1Buf), "%I:%M %p", &buf_now_local);
-      strftime(line2Buf, sizeof(line2Buf), "%b %d", &buf_now_local);
-      strftime(line4Buf, sizeof(line4Buf), "%b %d %H:%M", &buf_lastSync);
-      display.clearDisplay();
-      display.setTextSize(2);
-      display.setCursor(0, 0);     // Start at top-left corner
-      display.println(line1Buf);
-      display.println(line2Buf);
-      display.setTextSize(1);
-      display.println("");
-      display.printf("Uptime: %ld secs\n", uptime);
-      display.printf("Sync: %s\n", line4Buf);
-      display.display();
-    }
-
+    updateOptionalDisplay(
+      line1Buf,
+      line2Buf,
+      line3Buf,
+      line4Buf
+    );
 
     // Reboot once a day at noon to address any wifi hiccoughs.
     // (specifically, reboot any time after 12pm as long as it's been at least 20 hours since the last reboot)
@@ -484,5 +478,19 @@ bool wwvbLogicSignal(
 
 static inline int is_leap_year(int year) {
     return (year % 4 == 0) && (year % 100 != 0 || year % 400 == 0);
+}
+
+static inline void updateOptionalDisplay(const char* line1, const char* line2, const char* line3, const char* line4) {
+      display.clearDisplay();
+      display.setTextSize(2);
+      display.setCursor(0, 0);     // Start at top-left corner
+      display.println(line1 != NULL ? line1 : "");
+      display.println(line2 != NULL ? line2 : "");
+      display.setTextSize(1);
+      display.println("");
+      display.println(line3 != NULL ? line3 : "");
+      display.println(line4 != NULL ? line4 : "");
+      display.display();
+
 }
 
