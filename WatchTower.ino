@@ -151,11 +151,11 @@ void loop() {
 
   // DEBUGGING Optionally muck with buf_now_local
   // to make it easier to see if your watch has been set
-  if (true) {
+  if (false) {
     // Set the date to Dec 31
     buf_now_local.tm_mon = 11;
     buf_now_local.tm_mday = 31;
-    buf_now_local.tm_year -=1; // to prevent lastsync from rebooting
+    buf_now_local.tm_year -=1; // to prevent rebooting because the lastSync is so old
 
     // write your changes back to now and buf_now_local
     now.tv_sec = mktime(&buf_now_local);
