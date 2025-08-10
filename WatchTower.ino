@@ -4,6 +4,11 @@
 // - download and run the code on your device
 // - connect your phone to "WWVB" to set the wifi config for the device
 
+// Designed for the following, but should be easily
+// transfered to other components:
+// - Adafruit Qt Py ESP32 Pico: https://www.adafruit.com/product/5395
+// - Adafruit DRV8833 breakout: https://www.adafruit.com/product/3297
+
 #include <WiFiManager.h>
 #include <Adafruit_NeoPixel.h>
 #include <SPI.h>
