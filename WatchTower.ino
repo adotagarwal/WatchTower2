@@ -154,8 +154,6 @@ void setup() {
 }
 
 void loop() {
-  // TODO add sleep for planet earth
-
   // now and buf_now are used for the current time.
   struct timeval now, today_start, tomorrow_start;
   struct tm buf_now_utc, buf_now_local, buf_today_start, buf_tomorrow_start;
