@@ -154,37 +154,38 @@ void setup() {
 }
 
 void loop() {
-  // now and buf_now are used for the current time.
-  struct timeval now, today_start, tomorrow_start;
-  struct tm buf_now_utc, buf_now_local, buf_today_start, buf_tomorrow_start;
+  struct timeval now; // current time in seconds / millis
+  struct tm buf_now_utc; // current time in UTC
+  struct tm buf_now_local; // current time in localtime
+  struct tm buf_today_start, buf_tomorrow_start; // start of today and tomrrow in localtime
+
   gettimeofday(&now,NULL);
-  gmtime_r(&now.tv_sec, &buf_now_utc); 
   localtime_r(&now.tv_sec, &buf_now_local);
 
-  today_start = now;
+  // DEBUGGING Optionally muck with buf_now_local
+  // to make it easier to see if your watch has been set
+  if (true) {
+    // Set the date to Dec 31
+    buf_now_local.tm_mon = 11;
+    buf_now_local.tm_mday = 31;
+    buf_now_local.tm_year -=1; // to prevent lastsync from rebooting
+
+    // write your changes back to now and buf_now_local
+    now.tv_sec = mktime(&buf_now_local);
+    localtime_r(&now.tv_sec, &buf_now_local);
+  }
+
+  gmtime_r(&now.tv_sec, &buf_now_utc); 
+
+  struct timeval today_start = now;
   today_start.tv_usec = 0;
   today_start.tv_sec = (today_start.tv_sec / 86400) * 86400; // This is not exact but close enough
   localtime_r(&today_start.tv_sec, &buf_today_start);
 
-  tomorrow_start = now;
+  struct timeval tomorrow_start = now;
   tomorrow_start.tv_usec = 0;
   tomorrow_start.tv_sec = ((tomorrow_start.tv_sec / 86400) + 1) * 86400; // again, close enough
   localtime_r(&tomorrow_start.tv_sec, &buf_tomorrow_start);
-
-
-  // DEBUGGING
-  // If you're not sure if your clock is being set,
-  // you can uncomment these lines to offset the
-  // time by 30 minutes
-  // buf_now_utc.tm_min = buf_now_local.tm_min = (buf_now_utc.tm_min + 30) % 60;
-  // or set the date to always be dec 31
-  // buf_now_utc.tm_yday += (365 - buf_now_local.tm_yday); buf_now_local.tm_yday = 365;
-  // or set the time randomly every 10 minutes
-  // int mod_min = buf_now_utc.tm_min % 10;
-  // randomSeed(buf_now_utc.tm_min / 10); // pick a new random time every 10m
-  // buf_now_utc.tm_hour = buf_now_local.tm_hour = random(0,24);
-  // buf_now_utc.tm_min = buf_now_local.tm_min = (random(0,60) + mod_min) % 60;
-
 
   const bool prevLogicValue = logicValue;
 
@@ -252,6 +253,7 @@ void loop() {
 
     // If no sync in last 4h, set the pixel to red and reboot
     if( now.tv_sec - lastSync.tv_sec > 60 * 60 * 4 ) {
+      Serial.println("Last sync more than four hours ago, rebooting.");
       pixels.setPixelColor(0, COLOR_ERROR );
       delay(3000);
       forceReboot();
