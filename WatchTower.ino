@@ -57,7 +57,8 @@ struct timeval lastSync;
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 #define SCREEN_ADDRESS 0x3D /// See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+TwoWire* wire = &Wire1;  // some boards use Wire, some use Wire1
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, wire, OLED_RESET);
 
 
 // A tricky way to force arduino to reboot
@@ -90,8 +91,8 @@ void setup() {
 
   // Initialize optional I2c display
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
-  Wire.beginTransmission(SCREEN_ADDRESS);
-  displayConnected = Wire.endTransmission () == 0;
+  wire->beginTransmission(SCREEN_ADDRESS);
+  displayConnected = wire->endTransmission () == 0;
 
   if( displayConnected ) {
     display.setTextSize(1);      // Normal 1:1 pixel scale
