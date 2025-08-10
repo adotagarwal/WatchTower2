@@ -13,32 +13,35 @@
 #include "time.h"
 #include "esp_sntp.h"
 
+// Set this to the pin your antenna is connected on
+const int PIN_ANTENNA = 13;
+
+// Set to your timezone.
+// This is needed for computing DST if applicable
+// https://gist.github.com/alwynallan/24d96091655391107939
+const char *timezone = "PST8PDT,M3.2.0,M11.1.0"; // America/Los_Angeles
+
+
 enum WWVB_T {
   ZERO = 0,
   ONE = 1,
   MARK = 2,
 };
 
-const int PIN_ANTENNA = 13;
 const int KHZ_60 = 60000;
-
-// Set to your timezone.
-// This is needed for computing DST if applicable
-// https://gist.github.com/alwynallan/24d96091655391107939
-const char *timezone = "PST8PDT,M3.2.0,M11.1.0"; // America/Los_Angeles
 const char* ntpServer = "pool.ntp.org";
 
-WiFiManager wifiManager;
+// Configure the optional onboard neopixel
 Adafruit_NeoPixel pixels(1, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
-bool logicValue = 0; // TODO rename
-struct timeval lastSync;
-bool displayConnected = false;
-
 const uint32_t COLOR_READY = pixels.Color(0, 60, 0);
 const uint32_t COLOR_LOADING = pixels.Color(32, 20, 0);
 const uint32_t COLOR_ERROR = pixels.Color(150, 0, 0);
 const uint32_t COLOR_TRANSMIT = pixels.Color(32, 20, 0);
 
+WiFiManager wifiManager;
+bool logicValue = 0; // TODO rename
+bool displayConnected = false;
+struct timeval lastSync;
 
 // Optional I2c display 
 // https://www.adafruit.com/product/326
@@ -190,11 +193,11 @@ void loop() {
     ledcWrite(PIN_ANTENNA, dutyCycle(logicValue));  // Update the duty cycle of the PWM
 
     // light up the pixel if desired
-    // if( logicValue == 1 ) {
-    //   pixels.setPixelColor(0, COLOR_TRANSMIT ); // don't call show yet, the color may change
-    // } else {
-    //   pixels.clear();
-    // }
+    if( logicValue == 1 ) {
+      pixels.setPixelColor(0, COLOR_TRANSMIT ); // don't call show yet, the color may change
+    } else {
+      pixels.clear();
+    }
 
     // do any logging after we set the bit to not slow anything down,
     // serial port I/O is slow!
