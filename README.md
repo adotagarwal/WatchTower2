@@ -209,25 +209,31 @@ The electronics consist of three basic components: the microcontroller board, th
 
 The connections are quite simple, you can do them on a breadboard or a proto board. I recommend starting with a breadboard, which will look identical to this perma-proto board but without the solder:
 
-![PXL_20250728_205028200.jpg](docs/PXL_20250728_205028200.jpg)
+![](docs/PXL_20250810_160436141.jpg)
 
 **Microcontroller board** (Adafruit ESP32 QT Py in this photo)
 
-- Connect the ground pin to the ground plane (photo: J2).
 - Connect the 5V pin to the power plane (photo: J1).
-- Connect your signal pin [M0] to the input pin of your amplifier [AIN1] (photo: J4>J10).
+- Connect the ground pin to the ground plane (photo: J2).
+- Connect your signal pin [M0] to the input pin of your amplifier [AIN1] (photo: J4>J15).
 
 **DRV8833 Amplifier breakout**
 
-- Connect the second input pin [AIN2] of your amplifier to ground (photo: J11).
-- The Adafruit DRV8833 motor driver board has a sleep pin that needs to be pulled high to enable the breakout, so connect that to power 5v or 3v power, whatever is convenient. We used 5V here. (photo: J12)
-- Connect ground to the ground plane. (photo: J16)
-- [Optional] Connect the “motor” voltage [VM] to your 5V plane (photo: J17). This is needed if you are powering your amplifier via USB like I have here, but it should not be done if you are planning to use an external power supply on VMotor.
+I decided to leave a gap between my microcontroller board and my amplifier board. This will support an optional second antenna mounted vertically (you'll read more about this later), and it also makes it easier to access the STEMMA QT I2c connector on the QT Py.
+
+- Connect the second input pin [AIN2] of your amplifier to ground (photo: J16).
+- The Adafruit DRV8833 motor driver board has a sleep pin that needs to be pulled high to enable the breakout, so connect that to power 5v or 3v power, whatever is convenient. We used 5V here. (photo: J17)
+- Connect ground to the ground plane. (photo: J21)
+- [Optional] Connect the “motor” voltage [VM] to your 5V plane (photo: J22). This is needed if you are powering your amplifier via USB like I have here, but it should not be done if you are planning to use an external power supply on VMotor.
 The antenna and amplifier circuit can contribute some noise to your 5V line. If you’re worried about it you might use an external power supply instead, but I found for these settings that the noise was negligible (although see Alternatives Considered for some lessons learned).
+- Optional: connect BIN2 to ground (photo: J18). This is only needed if you want to use a second antenna.
+- Optional: connect BIN1 to AIN1 (**not in photo**: I15>I19). For a second antenna.
 
 **Antenna**
 
-- You can plug your antenna directly into your breadboard, or use a 0.1" Pitch PCB Mount Screw Terminal Block Connector connected to [AOUT1] and [AOUT2] (photo: C11, C12)
+- You can plug your antenna directly into your breadboard, or use a 0.1" Pitch PCB Mount Screw Terminal Block Connector connected to [AOUT1], [AOUT2], [BOUT2], and [BOUT1] (photo: C16, C17, C18, C19). If you are only using one antenna, you only need [AOUT1] and [AOUT2].
+
+
 
 ### Signal Verification
 
@@ -260,7 +266,7 @@ Print the enclosure using a 3D printer. I used standard PLA, standard 0.4mm nozz
 
 ![image.png](docs/image%206.png)
 
-Insert the circuit board into the base. If you have a second antenna, place the two-piece antenna stand inside the base, making sure to route your antenna wires through the notch in the "C" shaped antenna support. You can skip this step if you only have one antenna. Then press the lid for a snap fit.
+Insert the circuit board into the base. Then press the lid for a snap fit.
 
 ## Enjoy!
 
@@ -272,7 +278,9 @@ I get about 8 to 10 inches of signal in a straight line with no obstructions.
 
 If you need more than that, I recommend adding a second antenna at a 90 degree orientation from the first. You won't get a more powerful signal, but by having a second signal at a 90 degree orientiation you significanly increase the chance that your watches will be able to pick up a signal (see the section on antenna orientation below). The amplifier can easily handle two antennas.
 
-You can use the same terminal block you're using for the first antenna, just lightly solder the two antennas together and then plug them into the terminal block. The STL has optional components to mount the second antenna.
+If you soldered the optional [BOUT1] and [BOUT2] on your amplifier, you can plug your second antenna in there. If not, you can plug both antennas into [AOUT1] and [AOUT2], the single H-bridge has enough power to drive both antennas.
+
+The STL tower has a hole in the center to allow space for a 60mm ferrite rod antenna mounted vertically in the gap between the microcontroller and amplifier PCBs.
 
 If you still need more power, try giving a higher voltage a try using an external power supply to your amplifier.
 
@@ -283,7 +291,7 @@ If you still need more power, try giving a higher voltage a try using an externa
 
 You probably expect the signal to decrease as you get further away from the tower, but you might be surprised by how quickly the signal disappears.
 
-The "inverse square law" tells us that RF signal strength decreases with the square of the distance. We can measure our signal strength using our oscilloscope, a second antenna, and a ruler.
+The "inverse square law" tells us that RF signal strength decreases with the square of the distance. We can measure our signal strength using our oscilloscope, another antenna, and a ruler.
 
 ![signal strength at 1 inch setup](docs/signal-strength-1in.jpg)
 
