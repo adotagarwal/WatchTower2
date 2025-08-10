@@ -164,7 +164,7 @@ void loop() {
 
   // DEBUGGING Optionally muck with buf_now_local
   // to make it easier to see if your watch has been set
-  if (true) {
+  if (false) {
     // Set the date to Dec 31
     buf_now_local.tm_mon = 11;
     buf_now_local.tm_mday = 31;
