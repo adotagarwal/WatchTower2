@@ -78,6 +78,7 @@ void setup() {
   pixels.begin();
 
   pinMode(PIN_ANTENNA, OUTPUT);
+  pixels.setBrightness(20);
   pixels.setPixelColor(0, COLOR_LOADING );
   pixels.show();
 
