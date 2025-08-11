@@ -21,6 +21,7 @@
 
 // Set this to the pin your antenna is connected on
 const int PIN_ANTENNA = 13;
+const uint8_t LED_BRIGHTNESS = 10; // very dim, 0-255
 
 // Set to your timezone.
 // This is needed for computing DST if applicable
@@ -85,7 +86,7 @@ void setup() {
   pixels.begin();
 
   pinMode(PIN_ANTENNA, OUTPUT);
-  pixels.setBrightness(20);
+  pixels.setBrightness(LED_BRIGHTNESS); // very dim
   pixels.setPixelColor(0, COLOR_LOADING );
   pixels.show();
 
@@ -160,10 +161,8 @@ void loop() {
   // DEBUGGING Optionally muck with buf_now_local
   // to make it easier to see if your watch has been set
   if (false) {
-    // Set the date to Dec 31
-    buf_now_local.tm_mon = 11;
-    buf_now_local.tm_mday = 31;
-    buf_now_local.tm_year -=1; // to prevent rebooting because the lastSync is so old
+    // Set the date to the 1st
+    buf_now_local.tm_mday = 1;
 
     // write your changes back to now and buf_now_local
     now.tv_sec = mktime(&buf_now_local);
