@@ -161,6 +161,18 @@ void loop() {
   // DEBUGGING Optionally muck with buf_now_local
   // to make it easier to see if your watch has been set
   if (false) {
+    // I like to adjust the time to something I can tell was 
+    // set by the Watch Tower and not by Fort Collins.
+
+    // If you set the time/date ahead, be aware that the
+    // code will reboot if you set the time more than 4 hours
+    // ahead of lastSync.
+
+    // If you hardcode to a fixed date, be aware that some watches
+    // may not sync the date every night (presumably to save battery
+    // or speed up the sync process), so the date may not always be
+    // what you expect.
+
     // Set the date to the 1st
     buf_now_local.tm_mday = 1;
 
