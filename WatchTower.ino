@@ -171,11 +171,11 @@ void loop() {
     // If you hardcode to a fixed date, be aware that some watches
     // may not sync the date every night (presumably to save battery
     // or speed up the sync process), so the date may not always be
-    // what you expect.
+    // what you expect even though the watch says it sync'd.
 
-    // Set the date to the 1st
-    buf_now_local.tm_mday = 1;
-
+    // Subtract two weeks from today's date. mktime will do the right thing.
+    buf_now_local.tm_mday -= 14;
+    
     // write your changes back to now and buf_now_local
     now.tv_sec = mktime(&buf_now_local);
     localtime_r(&now.tv_sec, &buf_now_local);
