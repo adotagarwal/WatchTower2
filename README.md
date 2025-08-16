@@ -20,7 +20,7 @@ The classic WWVB transmits one bit of information per second (1Hz) and takes one
 
 ### An example
 
-Here’s an example of one 60 second time encoding:
+Here’s an example of one 60 second time encoding (graphic designed for "light mode"):
 
 ![image.png](docs/image%201.png)
 
