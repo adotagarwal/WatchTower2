@@ -261,8 +261,8 @@ Here I also made a quick and dirty “mount” for the antenna by twisting a cou
 Print the enclosure using a 3D printer. I used standard PLA, standard 0.4mm nozzle, and pretty much default slicer settings with no supports.
 
 
-* STL: [The Watch Tower v15.stl](enclosure/The%20Watch%20Tower%20v15.stl)
-* Autodesk Fusion: [The Watch Tower v15.f3d](enclosure/The%20Watch%20Tower%20v15.f3d)
+* STL: [The Watch Tower.stl](enclosure/The%20Watch%20Tower%20v18.stl)
+* Autodesk Fusion: [The Watch Tower.f3d](enclosure/The%20Watch%20Tower%20v18.f3d)
 
 ![image.png](docs/image%206.png)
 
