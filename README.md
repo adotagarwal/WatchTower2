@@ -63,9 +63,9 @@ So now you know how to encode the time and date using WWVB!
 
 ### The carrier wave
 
-There’s one more part of the signal that needs explanation. While we’re transmitting bits at a frequency of 1 bit per second (1 Hz), we’re actually doing it on top of a 60 kHz carrier wave. The carrier wave isn’t particularly important to the actual encoding of the bits, but it is important because that’s the frequency that’s been allocated for WWVB use and so your watch is looking for a 60 kHz signal using its 60 kHz antenna.
+There’s one more part of the signal that needs explanation. While we’re transmitting bits at a frequency of 1 bit per second (1 Hz), we’re actually doing it on top of a 60 kHz carrier wave by varying the amplitude of the carrier wave.
 
-Like we said in the previous section, we represent a high/low/mark trit by the width of our pulse. High for 200ms is a zero, high for 500ms is a 1, high for 800ms is a mark. The way we’ll do that on our 60 kHz carrier wave is by using PWM again, but this time on the 60 kHz signal instead of on the 1 Hz signal. We’ll use a duty cycle of 50% to represent high, which means that half of our 60 kHz pulse is high and half is low. We’ll use a duty cycle of 0% to represent low which effectively means the whole pulse is low.
+Like we said in the previous section, we represent a high/low/mark trit by the width of our pulse. High for 200ms is a zero, high for 500ms is a 1, high for 800ms is a mark. The way we’ll do that on our 60 kHz carrier wave is by using PWM again, but this time on the 60 kHz signal instead of on the 1 Hz signal. We’ll use a duty cycle of 50% to represent High, which means that half of our 60 kHz pulse is high and half is low. We’ll use a duty cycle of 0% to represent Low which effectively means the whole pulse is low.
  
  <img src="docs/dutycycle.png" width=400>
 
