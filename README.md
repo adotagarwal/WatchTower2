@@ -274,7 +274,7 @@ Plug into USB and you’re done! Your watches should now sync automatically ever
 
 ![image.png](docs/image.png)
 
-I get about 8 to 10 inches of signal in a straight line with no obstructions. 
+I get about 8 to 10 inches of signal in a straight line with no obstructions for watches. With a bedside clock like the Hito C8376, I get 3 or 4 feet due to its larger antenna.
 
 If you need more than that, I recommend adding a second antenna at a 90 degree orientation from the first. You won't get a more powerful signal, but by having a second signal at a 90 degree orientiation you significanly increase the chance that your watches will be able to pick up a signal (see the section on antenna orientation below). The amplifier can easily handle two antennas.
 
