@@ -47,7 +47,7 @@ WWVB uses **Pulse Width Modulation** (PWM) to represent the three possible trit 
 - If power is reduced for one-half of a second (0.5 s), this is a data bit with value one.
 - If power is reduced for four-fifths of a second (0.8 s), this is a special non-data "mark", used for framing.
 
-| **High** | **Trit value** |
+| **Low** | **Trit value** |
 | --- | --- |
 | 0.2s | 0 |
 | 0.5s | 1 |
