@@ -93,9 +93,9 @@ Now that you understand how it works, let’s build the transmitter!
 
 - An ESP32-based development board such as the AdaFruit QT Py ESP32, AdaFruit Feather ESP32 v2, Arduino Nano ESP32, Seeed Xiao ESP32C3 or similar. I used the [QT Py ESP32](https://www.adafruit.com/product/5395).
 - An H-bridge amplifier circuit. You can build your own, or I used the [Adafruit DRV8833 DC/Stepper Motor Driver Breakout Board](https://www.adafruit.com/product/3297). Boards using the TB6612 would probably also work, you just need something that can handle 5V or more, a few hundred milliamps and a switching frequency of 60khz or higher.
-- A [60khz ferrite rod antenna](https://www.canaduino.ca/product/60khz-atomic-clock-receiver-v4-wwvb-msf-jjy60/). You can pull one from an existing quartz radio-controlled movement, or I bought mine from Canaduino. If you want better reliability at distance you may consider using a second antenna. Some users have had luck with a simple 20 inch length of straight copper wire, but I found the signal to be too weak to be reliable.
+- One or two [60khz ferrite rod antennas](https://www.canaduino.ca/product/60khz-atomic-clock-receiver-v4-wwvb-msf-jjy60/). You can pull one from an existing quartz radio-controlled movement, or I bought mine from Canaduino. If you want better reliability at distance you may consider using a second antenna. Some users have had luck with a simple 20 inch length of straight copper wire, but I found the signal to be too weak to be reliable.
 - Bread board and [jumper wires](https://www.amazon.com/dp/B08YRGVYPV).
-- PCB Mount Screw Terminal Block connector to connect your antenna, something like [this](https://www.amazon.com/dp/B09F6TC7RP). Not strictly necessary but nice to have. Use a two pin terminal if you only plan to have one antenna, or a four pin if you might use two antennas.
+- PCB Mount Screw Terminal Block connector to connect your antenna(s), something like [this](https://www.amazon.com/dp/B09F6TC7RP). Not strictly necessary but nice to have. Use a two pin terminal if you only plan to have one antenna, or a four pin if you want two antennas.
 
 ## Optional
 
@@ -205,7 +205,7 @@ Looks great! Everything is working as expected.
 
 Now that you’ve verified the microcontroller is working, it’s time to put all the components together.
 
-The electronics consist of three basic components: the microcontroller board, the amplifier breakout board, and the antenna.
+The electronics consist of three basic components: the microcontroller board, the amplifier breakout board, and the antenna(s).
 
 The connections are quite simple, you can do them on a breadboard or a proto board. I recommend starting with a breadboard, which will look identical to this perma-proto board but without the solder:
 
@@ -219,7 +219,7 @@ The connections are quite simple, you can do them on a breadboard or a proto boa
 
 **DRV8833 Amplifier breakout**
 
-I decided to leave a gap between my microcontroller board and my amplifier board. This will support an optional second antenna mounted vertically (you'll read more about this later), and it also makes it easier to access the STEMMA QT I2c connector on the QT Py.
+I decided to leave a gap between my microcontroller board and my amplifier board. This will support an optional second antenna mounted vertically, and it also makes it easier to access the STEMMA QT I2c connector on the QT Py.
 
 - Connect the second input pin [AIN2] of your amplifier to ground (photo: J16).
 - The Adafruit DRV8833 motor driver board has a sleep pin that needs to be pulled high to enable the breakout, so connect that to power 5v or 3v power, whatever is convenient. We used 5V here. (photo: J17)
@@ -229,9 +229,15 @@ The antenna and amplifier circuit can contribute some noise to your 5V line. If 
 - Optional: connect BIN2 to ground (photo: J18). This is only needed if you want to use a second antenna.
 - Optional: connect BIN1 to AIN1 (**not in photo**: I15>I19). For a second antenna.
 
-**Antenna**
+**Antenna(s)**
 
-- You can plug your antenna directly into your breadboard, or use a 0.1" Pitch PCB Mount Screw Terminal Block Connector connected to [AOUT1], [AOUT2], [BOUT2], and [BOUT1] (photo: C16, C17, C18, C19). If you are only using one antenna, you only need [AOUT1] and [AOUT2].
+- You can plug your antennas directly into your breadboard, or use a 0.1" Pitch PCB Mount Screw Terminal Block Connector connected to [AOUT1], [AOUT2], [BOUT2], and [BOUT1] (photo: C16, C17, C18, C19). If you are only using one antenna, you only need [AOUT1] and [AOUT2].
+
+  The orientation of the antenna has a profound effect on the strength of the signal. I recommend using a second antenna at a 90 degree orientation to the first. You won't get a more powerful signal, but by having a second signal at a 90 degree orientiation you significanly increase the chance that your watches will be able to pick up a signal (see the section on antenna orientation below). The amplifier can easily handle two antennas.
+
+  With one antenna, I was getting around 12 inches of range with the way my watches were oriented. With the second antenna, that jumped up to more than 6 feet!
+
+  The STL tower has a hole in the center to allow space for a 60mm ferrite rod antenna mounted vertically in the gap between the microcontroller and amplifier PCBs.
 
 
 
@@ -255,7 +261,7 @@ The enclosure is designed for a 51mm x 63mm perma-proto, which is the size of a 
 
 ![image.png](docs/image%205.png)
 
-Here I also made a quick and dirty “mount” for the antenna by twisting a couple of loops of wire and soldering them to the perma proto.
+Here I also made a quick and dirty “mount” for the antenna by twisting a couple of loops of wire and soldering them to the perma proto. Hot glue also works great.
 
 
 Print the enclosure using a 3D printer. I used standard PLA, standard 0.4mm nozzle, and pretty much default slicer settings with no supports.
@@ -266,23 +272,13 @@ Print the enclosure using a 3D printer. I used standard PLA, standard 0.4mm nozz
 
 ![image.png](docs/image%206.png)
 
-Insert the circuit board into the base. Then press the lid for a snap fit.
+Insert the circuit board into the base. Orient the second antenna between the two PCBs and fit it into the hole in the tower. Then press the lid for a snap fit.
 
 ## Enjoy!
 
 Plug into USB and you’re done! Your watches should now sync automatically every night.
 
 ![image.png](docs/image.png)
-
-I get about 8 to 10 inches of signal in a straight line with no obstructions for watches. With a bedside clock like the Hito C8376, I get 3 or 4 feet due to its larger antenna.
-
-If you need more than that, I recommend adding a second antenna at a 90 degree orientation from the first. You won't get a more powerful signal, but by having a second signal at a 90 degree orientiation you significanly increase the chance that your watches will be able to pick up a signal (see the section on antenna orientation below). The amplifier can easily handle two antennas.
-
-If you soldered the optional [BOUT1] and [BOUT2] on your amplifier, you can plug your second antenna in there. If not, you can plug both antennas into [AOUT1] and [AOUT2], the single H-bridge has enough power to drive both antennas.
-
-The STL tower has a hole in the center to allow space for a 60mm ferrite rod antenna mounted vertically in the gap between the microcontroller and amplifier PCBs.
-
-If you still need more power, try giving a higher voltage a try using an external power supply to your amplifier.
 
 
 ## Signal strength
@@ -329,6 +325,8 @@ Most watches receive their strongest signal through the watch face. For the best
 
 This doesn't matter for watches on the stand where the signal is strong, but it can make a difference for watches that are further away.
 
+This is why I recommend two antennas at right angles from each other.
+
 ### Does the enclosure affect signal strength?
 
 Plastic enclosures have a negligible effect on signal strength. The Watch Tower enclosure printed using generic PLA has maybe 5% or less of an impact on signal strength. Again, a few degrees of orientation will have a larger effect than an enclosure.
@@ -345,7 +343,7 @@ Watches vary in terms of their antenna design, their enclosures, antenna orienta
 
 I tested with a Junghans Max Bill Mega Solar 59/2021.02 (Seiko movement) and a Casio Lineage LIW-M700D (Casio movement). In practice, the orientation of your watch will probably have orders of magnitude more influence on your reception than the model of your watch.
 
-I made five attempts with each watch at a distance of 9" with the antenna and the watch both flat on the surface. To minimize interference from Fort Collins, I placed everything inside a poor man's faraday cage (a stainless steel stock pot with a tight lid, which Gemini tells me is reasonably effective at blocking 60 kHz signals). For each attempt, I gave the watch 5 minutes to try to set the time before I lifted the lid. 
+Using the SINGLE antenna, I made five attempts with each watch at a distance of 9" with the antenna and the watch both flat on the surface. To minimize interference from Fort Collins, I placed everything inside a poor man's faraday cage (a stainless steel stock pot with a tight lid, which Gemini tells me is reasonably effective at blocking 60 kHz signals). For each attempt, I gave the watch 5 minutes to try to set the time before I lifted the lid. 
 
 ![clock in a pot](docs/PXL_20250809_195931921.jpg)
 
@@ -354,9 +352,10 @@ I made five attempts with each watch at a distance of 9" with the antenna and th
 | Casio   | Yes | No | Yes | Yes | Yes |
 | Junghans| Yes | Yes | Yes | Yes | Yes |
 
-Outcome: ~90% success at 9"
+Outcome: ~90% success at 9" (single antenna)
 
-In practice, I've found that watches on the Watch Tower will reliably sync every time, and most watches on my nearby watch stand will also sync most of the time. As a next step I may consider adding more towers to the Watch Tower to bring my whole collection closer to the antenna.
+In practice, I've found that watches on the Watch Tower will reliably sync every time, and most watches on my nearby watch stand will also sync most of the time using a single antenna. Adding the second antenna increases reliability to basically 100%.
+
 
 
 ## Alternatives considered
