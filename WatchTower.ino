@@ -1,33 +1,19 @@
 // INSTRUCTIONS
 // - set the PIN_ANTENNA to desired output pin
-// - set the timezone as desired
 // - download and run the code on your device
 // - connect your phone to "WWVB" to set the wifi config for the device
 
 // Designed for the following, but should be easily
 // transferable to other components:
-// - Adafruit Qt Py ESP32 Pico: https://www.adafruit.com/product/5395
-// - Adafruit DRV8833 breakout: https://www.adafruit.com/product/3297
-// - (optional) Adafruit I2c display: https://www.adafruit.com/product/326
+// - ESP32: https://www.adafruit.com/product/5395
+// - DRV8833 breakout: https://www.adafruit.com/product/3297
 
 #include <WiFiManager.h>
-#include <Adafruit_NeoPixel.h>
-#include <SPI.h>
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
 #include "time.h"
 #include "esp_sntp.h"
-
-// Set this to the pin your antenna is connected on
-const int PIN_ANTENNA = 13;
-const uint8_t LED_BRIGHTNESS = 10; // very dim, 0-255
-
-// Set to your timezone.
-// This is needed for computing DST if applicable
-// https://gist.github.com/alwynallan/24d96091655391107939
-const char *timezone = "PST8PDT,M3.2.0,M11.1.0"; // America/Los_Angeles
-
+#include "time-services.h"
+#include <Preferences.h>
+#include <ESPUI.h>
 
 enum WWVB_T {
   ZERO = 0,
@@ -35,32 +21,28 @@ enum WWVB_T {
   MARK = 2,
 };
 
-const int KHZ_60 = 60000;
-const char* ntpServer = "pool.ntp.org";
+// Set these values to the pin numbers corresponding to those your antenna and onboard led are connected
+const int PIN_ANTENNA = 23;
+const int PIN_LED = 2;
 
-// Configure the optional onboard neopixel
-Adafruit_NeoPixel pixels(1, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
-const uint32_t COLOR_READY = pixels.Color(0, 60, 0);
-const uint32_t COLOR_LOADING = pixels.Color(32, 20, 0);
-const uint32_t COLOR_ERROR = pixels.Color(150, 0, 0);
-const uint32_t COLOR_TRANSMIT = pixels.Color(32, 20, 0);
-
+//STATE VARIABLES
 WiFiManager wifiManager;
+Preferences thePreferences;
 bool logicValue = 0; // TODO rename
-bool displayConnected = false;
+uint64_t logicBits = 0;
 struct timeval lastSync;
+uint16_t liveLogHandle;
+uint16_t liveLogicBitsHandle;
+String logBuffer = "";
 
-// Optional I2c display 
-// https://www.adafruit.com/product/326
-// Does nothing if no display present.
-// Can be removed if not using.
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 64 // OLED display height, in pixels
-#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
-#define SCREEN_ADDRESS 0x3D /// See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
-TwoWire* wire = &Wire1;  // some boards use Wire, some use Wire1
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, wire, OLED_RESET);
+// PREFERENCE VARIABLES
+bool enableFlashing = false;
+enum time_service theService = WWVB;
+String theNtpServer;
+String theTimezone;
+String theHostname;
 
+// TIMEZONES: https://gist.github.com/alwynallan/24d96091655391107939
 
 // A tricky way to force arduino to reboot
 // by accessing a protected memory address
@@ -69,93 +51,272 @@ void(* forceReboot) (void) = 0;
 // A callback that tracks when we last sync'ed the
 // time with the ntp server
 void time_sync_notification_cb(struct timeval *tv) {
-  lastSync = *tv;
+    lastSync = *tv;
 }
 
 // A callback that is called when the device
 // starts up an access point for wifi configuration.
 // This is called when the device cannot connect to wifi.
 void accesspointCallback(WiFiManager*) {
-  Serial.println("Connect to WWVB with another device to set wifi configuration.");
-  updateOptionalDisplay("SSID: WWVB", NULL, "Use your phone", "to setup WiFi.");
+    Serial.println("Connect to WWVB with another device to set wifi configuration.");
+}
+
+void readPreferences() { 
+    thePreferences.begin("watchtower", true);
+    Serial.println("Reading preferences");
+    theNtpServer = thePreferences.getString("ntp-Server", "pool.ntp.org");
+    theTimezone = thePreferences.getString("timezone", "EST5EDT,M3.2.0,M11.1.0");
+    theHostname = thePreferences.getString("hostname", "wwvb");
+    const char *myServiceString = thePreferences.getString("timeService", "AAIOT-WWVB").c_str();
+    theService = getServiceForString(myServiceString);
+    enableFlashing = thePreferences.getBool("enableFlashing", true);
+
+    Serial.printf("Preferences read: {ntp server: %s, timezone: %s, hostname: %s, service: %d, enableFlashing: %d}\n",
+        theNtpServer,
+        theTimezone.c_str(),
+        theHostname,
+        theService,
+        enableFlashing
+        );
+    thePreferences.end();
+}
+
+void savePreferences() {
+    thePreferences.begin("watchtower", false);
+    String myService = getStringForService(theService);
+    thePreferences.putString("ntp-Server", theNtpServer);
+    thePreferences.putString("timezone", theTimezone);
+    thePreferences.putString("timeService", myService);
+    thePreferences.putString("hostname", theHostname);
+    thePreferences.putBool("enableFlashing", enableFlashing);
+    thePreferences.end();
 }
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  pixels.begin();
-
+  Serial.println("Starting...");
+  
   pinMode(PIN_ANTENNA, OUTPUT);
-  pixels.setBrightness(LED_BRIGHTNESS); // very dim
-  pixels.setPixelColor(0, COLOR_LOADING );
-  pixels.show();
-
-  // Initialize optional I2c display
-  display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
-  wire->beginTransmission(SCREEN_ADDRESS);
-  displayConnected = wire->endTransmission () == 0;
-
-  if( displayConnected ) {
-    display.setTextSize(1);      // Normal 1:1 pixel scale
-    display.setTextColor(SSD1306_WHITE); // Draw white text
-    display.cp437(true);         // Use full 256 char 'Code Page 437' font
-
-    updateOptionalDisplay(NULL, NULL, NULL, "Connecting...");
-  }
+  pinMode(PIN_LED, OUTPUT);
 
   // hack for this on esp32 qt py?
   // E (14621) rmt: rmt_new_tx_channel(269): not able to power down in light sleep
   digitalWrite(PIN_ANTENNA, 0);
+  //digitalWrite(PIN_LED, 0);
 
-  // https://github.com/tzapu/WiFiManager/issues/1426
+  readPreferences();
+
   WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
+
+  Serial.println("Connecting to Wi-Fi...");
 
   // Connect to WiFi using // https://github.com/tzapu/WiFiManager 
   // If no wifi, start up an SSID called "WWVB" so
   // the user can configure wifi using their phone.
   wifiManager.setAPCallback(accesspointCallback);
-  wifiManager.autoConnect("WWVB");
+  wifiManager.autoConnect(theHostname.c_str());
 
-  updateOptionalDisplay(NULL, NULL, NULL, "Syncing time...");
+  Serial.println("Syncing NTP time...");
 
   // Connect to network time server
   // By default, it will resync every hour
   sntp_set_time_sync_notification_cb(time_sync_notification_cb);
-  configTime(0, 0, ntpServer);
+  configTime(0, 0, theNtpServer.c_str());
   struct tm timeinfo;
   if(!getLocalTime(&timeinfo)){
     Serial.println("Failed to obtain time");
-    pixels.setPixelColor(0, COLOR_ERROR );
-    pixels.show();
+    flashFailure();
     delay(3000);
     forceReboot();
   }
   Serial.println("Got the time from NTP");
+  flashSuccess();
 
   // Now set the timezone.
   // We broadcast in UTC, but we need the timezone for the is_dst bit
-  setenv("TZ",timezone,1);
-  tzset();
+  updateTimezone();
 
   // Start the 60khz carrier signal using 8-bit (0-255) resolution
-  ledcAttach(PIN_ANTENNA, KHZ_60, 8);
+  int myFrequency = getFrequencyForService(theService);
+
+  ledcAttach(PIN_ANTENNA, myFrequency, 8);
+  
+  createUi();
+
+  char timeStringBuff[100]; // Buffer to hold the formatted time string
+  strftime(timeStringBuff, sizeof(timeStringBuff), "%A, %B %d %Y %H:%M:%S", &timeinfo);
+  appendToLogFormat("Started up at %s", timeStringBuff);
 
   // green means go
-  pixels.setPixelColor(0, COLOR_READY );
-  pixels.show();
-  delay(3000);
+  flashSuccess();
+}
 
-  pixels.clear();  
-  pixels.show();
+void attachPwmPin() {
+  int myFrequency = getFrequencyForService(theService);
+  appendToLogFormat("using frequency: %d", myFrequency);
+  ledcAttach(PIN_ANTENNA, myFrequency, 8);
+}
+
+void detachPwmPin() {
+    appendToLog("detaching pwm pin");
+    digitalWrite(PIN_ANTENNA, 0);
+    ledcDetach(PIN_ANTENNA);
+}
+
+void updateTimezone() { 
+    setenv("TZ",theTimezone.c_str(),1);
+    tzset();
+}
+
+void createUi() { 
+    ControlColor myControlColor = ControlColor::Dark;
+    uint16_t mySettingsTab = ESPUI.addControl(ControlType::Tab, "Settings", "Settings");
+    uint16_t myLogTab = ESPUI.addControl(ControlType::Tab, "Log", "Log");
+
+    // host name
+    ESPUI.addControl(ControlType::Text, "Hostname:", theHostname.c_str(), myControlColor, mySettingsTab, &setHostname);
+
+    // ntp server
+    ESPUI.addControl(ControlType::Text, "NTP Server:", theNtpServer.c_str(), myControlColor, mySettingsTab, &setNtpServer);
+
+    // time zone string
+    ESPUI.addControl(ControlType::Text, "Time Zone String:", theTimezone.c_str(), myControlColor, mySettingsTab, &setTimezoneFromSelect);
+
+    const char* myServiceString = getStringForService(theService);
+
+    // time service
+    uint16_t myServiceSelect
+        = ESPUI.addControl(ControlType::Select, "Time Service:", myServiceString, myControlColor, mySettingsTab, &setServiceFromSelect);
+    ESPUI.addControl(ControlType::Option, "WWVB (USA)", "WWVB", ControlColor::None, myServiceSelect);
+    ESPUI.addControl(ControlType::Option, "DCF77 (EU)", "DCF77", ControlColor::None, myServiceSelect);
+    ESPUI.addControl(ControlType::Option, "JJY40 (ASIA)", "JJY40", ControlColor::None, myServiceSelect);
+    ESPUI.addControl(ControlType::Option, "JJY60 (ASIA)", "JJY60", ControlColor::None, myServiceSelect);
+    ESPUI.addControl(ControlType::Option, "MSF (UK)", "MSF", ControlColor::None, myServiceSelect);
+    ESPUI.addControl(ControlType::Option, "Legacy Mode (OG Code)", "LEGACY", ControlColor::None, myServiceSelect);
+
+    // enable flashing
+    ESPUI.addControl(ControlType::Switcher, "Enable Flashing", enableFlashing ? "1" : "0", myControlColor, mySettingsTab, &setEnableFlashing);
+    
+    // write preferences to nvs
+    ESPUI.addControl(ControlType::Button, "Persist Settings", "Save", ControlColor::Wetasphalt, mySettingsTab, &handlePersistSettings);
+
+    // reboot
+    ESPUI.addControl(ControlType::Button, "Reboot Device", "Reboot", ControlColor::Wetasphalt, mySettingsTab, &handleReboot);
+
+    // logs
+    liveLogHandle = ESPUI.addControl(ControlType::Label, "Log Output", "", myControlColor, myLogTab);
+    liveLogicBitsHandle = ESPUI.addControl(ControlType::Label, "Current Logic Bits", "", myControlColor, myLogTab);
+
+    ESPUI.beginLITTLEFS("Radio Controlled Watch Tower Administration");
+}
+
+int theLogCounter = 0;
+void appendToLog(const String& message) {
+    Serial.println(message);
+    logBuffer += message + "\n";
+    // Optionally, limit the size of logBuffer to prevent memory issues
+    if (logBuffer.length() > 512) { // Example limit
+        logBuffer = logBuffer.substring(logBuffer.indexOf('\n') + 1);
+    }
+
+    if (true || ++theLogCounter % 10 == 0) {
+        theLogCounter = 0;
+        ESPUI.updateText(liveLogHandle, logBuffer); // Assuming "logLabel" is the ID of your label
+    }
+}
+
+void appendToLogFormat(const char * format, ...) {
+    static char buffer[256]; // A static buffer to store the formatted string
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args); // Use vsnprintf for safety
+    va_end(args);
+    
+    appendToLog(buffer);
+}
+
+void updateCurrentLogicBitsLabel() { 
+    // convert logicBits to string
+    // set string
+    String myString = "";
+    for (int i = 63; i >= 0; --i) {
+        if ((logicBits >> i) & 1) {
+            myString += '1';
+        } else {
+            myString += '0';
+        }
+    }
+    ESPUI.updateText(liveLogicBitsHandle, myString);
+}
+
+void setHostname(Control* sender, int type) {
+    appendToLogFormat("Updating hostname based on value: %s", sender->value);
+    theHostname = sender->value.c_str();
+    appendToLogFormat("Updated hostname to: %s", theHostname);
+}
+
+void setNtpServer(Control* sender, int type) {
+    appendToLogFormat("Updating ntp server based on value: %s", sender->value);
+    theNtpServer = sender->value.c_str();
+    appendToLogFormat("Updated ntp server to: %s", theNtpServer);
+}
+
+void setEnableFlashing(Control* sender, int value) {
+    switch (value)
+    {
+    case S_ACTIVE:
+        appendToLog("Enable flashing");
+        enableFlashing = true;
+        break;
+
+    case S_INACTIVE:
+        appendToLog("Disable flashing");
+        enableFlashing = false;
+        break;
+    }
+}
+
+void setServiceFromSelect(Control* sender, int value)
+{
+    appendToLogFormat("Updating service based on value: %s", sender->value);
+    theService = getServiceForString(sender->value.c_str());
+    detachPwmPin();
+    attachPwmPin();
+    appendToLogFormat("Updated time service to: %d", theService);
+}
+
+void setTimezoneFromSelect(Control* sender, int value)
+{
+    appendToLogFormat("Updating timezone based on value: %s", sender->value);
+    theTimezone = sender->value;
+    updateTimezone();
+    appendToLogFormat("Updated timezone to: %s", theTimezone);
+}
+
+void handlePersistSettings(Control* sender, int type) {
+    if (type == B_UP) {
+        appendToLog("Persisting settings to NVS");
+        savePreferences();
+    }
+}
+
+void handleReboot(Control* sender, int type) {
+    if (type == B_UP) {
+        appendToLog("Forced reboot NOW");
+        forceReboot();
+    }
 }
 
 void loop() {
   struct timeval now; // current time in seconds / millis
+  time_t nowRounded; // current time in hour, minute (no seconds)
   struct tm buf_now_utc; // current time in UTC
   struct tm buf_now_local; // current time in localtime
   struct tm buf_today_start, buf_tomorrow_start; // start of today and tomrrow in localtime
 
   gettimeofday(&now,NULL);
+  nowRounded = now.tv_sec - now.tv_sec % 60;
   localtime_r(&now.tv_sec, &buf_now_local);
 
   // DEBUGGING Optionally muck with buf_now_local
@@ -196,26 +357,33 @@ void loop() {
   localtime_r(&tomorrow_start.tv_sec, &buf_tomorrow_start);
 
   const bool prevLogicValue = logicValue;
+  const uint64_t prevLogicBits = logicBits;
 
-  logicValue = wwvbLogicSignal(
-    buf_now_utc.tm_hour,
-    buf_now_utc.tm_min,
-    buf_now_utc.tm_sec, 
-    now.tv_usec/1000,
-    buf_now_utc.tm_yday+1,
-    buf_now_utc.tm_year+1900,
-    buf_today_start.tm_isdst,
-    buf_tomorrow_start.tm_isdst
-    );
+  if (theService == LEGACY) {
+    logicValue = wwvbLogicSignal(
+        buf_now_utc.tm_hour,
+        buf_now_utc.tm_min,
+        buf_now_utc.tm_sec, 
+        now.tv_usec/1000,
+        buf_now_utc.tm_yday+1,
+        buf_now_utc.tm_year+1900,
+        buf_today_start.tm_isdst,
+        buf_tomorrow_start.tm_isdst
+        );
+  } else {
+    logicBits = prepareMinute(theService, nowRounded);
+    int myModulation = getModulationForSecond(theService, logicBits, buf_now_utc.tm_sec);
+    logicValue =  getLogicForMillisecond(theService, myModulation, now.tv_usec/1000);
+  }
 
   if( logicValue != prevLogicValue ) {
     ledcWrite(PIN_ANTENNA, dutyCycle(logicValue));  // Update the duty cycle of the PWM
 
     // light up the pixel if desired
-    if( logicValue == 1 ) {
-      pixels.setPixelColor(0, COLOR_TRANSMIT ); // don't call show yet, the color may change
+    if( logicValue == 1 && enableFlashing) {
+      digitalWrite(PIN_LED, HIGH);
     } else {
-      pixels.clear();
+      digitalWrite(PIN_LED, LOW);
     }
 
     // do any logging after we set the bit to not slow anything down,
@@ -230,45 +398,54 @@ void loop() {
     Serial.printf("%s.%03d (%s) [last sync %s]: %s\n",timeStringBuff, now.tv_usec/1000, buf_now_local.tm_isdst ? "DST" : "STD", lastSyncStringBuff, logicValue ? "1" : "0");
 
     long uptime = millis()/1000;
-    char line1Buf[100], line2Buf[100], line3Buf[100], line4Buf[100];
-    strftime(line1Buf, sizeof(line1Buf), "%I:%M %p", &buf_now_local);
-    strftime(line2Buf, sizeof(line2Buf), "%b %d", &buf_now_local);
-    sprintf(line3Buf, "Uptime: %ld secs\n", uptime);
-    strftime(line4Buf, sizeof(line4Buf), "Sync: %b %d %H:%M", &buf_lastSync);
-
-    // update the optional I2c display for debugging
-    // Does nothing if no display connected
-    updateOptionalDisplay(
-      line1Buf,
-      line2Buf,
-      line3Buf,
-      line4Buf
-    );
 
     // Reboot once a day at noon to address any wifi hiccoughs.
     // (specifically, reboot any time after 12pm as long as it's been at least 20 hours since the last reboot)
     if( uptime > 20*60*60  && buf_now_local.tm_hour >= 12) {
-      Serial.println("Initiating daily reboot");
+      appendToLog("Initiating daily reboot");
+      flashSuccess();
       delay(1000);
       forceReboot();
     }
 
     // If no sync in last 4h, set the pixel to red and reboot
-    if( now.tv_sec - lastSync.tv_sec > 60 * 60 * 4 ) {
-      Serial.println("Last sync more than four hours ago, rebooting.");
-      pixels.setPixelColor(0, COLOR_ERROR );
+    if(uptime > 4*60*60 && now.tv_sec - lastSync.tv_sec > 60 * 60 * 4 ) {
+      appendToLog("Last sync more than four hours ago, rebooting.");
+      flashFailure();
       delay(3000);
       forceReboot();
     }
+  }
 
-    pixels.show();  
-  }  
+  if (logicBits != prevLogicBits) {
+    updateCurrentLogicBitsLabel();
+  }
 }
 
 // Convert a logical bit into a PWM pulse width.
 // Returns 50% duty cycle (128) for high, 0% for low
 static inline short dutyCycle(bool logicValue) {
   return logicValue ? (256*0.5) : 0; // 128 == 50% duty cycle
+}
+
+
+static inline void flashSuccess() {
+    for (int i = 0; i < 3; i++) {
+        digitalWrite(PIN_LED, HIGH);
+        delay(100);
+        digitalWrite(PIN_LED, LOW);
+        delay(100);
+    }
+}
+
+static inline void flashFailure() {
+    for (int i = 0; i < 7; i++) {
+        digitalWrite(PIN_LED, HIGH);
+        delay(500);
+        digitalWrite(PIN_LED, LOW);
+        delay(500);
+    }
+    digitalWrite(PIN_LED, HIGH);
 }
 
 
@@ -487,20 +664,3 @@ bool wwvbLogicSignal(
 static inline int is_leap_year(int year) {
     return (year % 4 == 0) && (year % 100 != 0 || year % 400 == 0);
 }
-
-static inline void updateOptionalDisplay(const char* line1, const char* line2, const char* line3, const char* line4) {
-  if( !displayConnected ) 
-    return;
-
-  display.clearDisplay();
-  display.setTextSize(2);
-  display.setCursor(0, 0);     // Start at top-left corner
-  display.println(line1 != NULL ? line1 : "");
-  display.println(line2 != NULL ? line2 : "");
-  display.setTextSize(1);
-  display.println("");
-  display.println(line3 != NULL ? line3 : "");
-  display.println(line4 != NULL ? line4 : "");
-  display.display();
-}
-
