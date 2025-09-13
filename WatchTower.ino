@@ -9,17 +9,12 @@
 // - DRV8833 breakout: https://www.adafruit.com/product/3297
 
 #include <WiFiManager.h>
+#include <Preferences.h>
+#include <ESPUI.h>
 #include "time.h"
 #include "esp_sntp.h"
 #include "time-services.h"
-#include <Preferences.h>
-#include <ESPUI.h>
-
-enum WWVB_T {
-  ZERO = 0,
-  ONE = 1,
-  MARK = 2,
-};
+#include "wwvb-impl.h"
 
 // Set these values to the pin numbers corresponding to those your antenna and onboard led are connected
 const int PIN_ANTENNA = 23;
@@ -59,37 +54,6 @@ void time_sync_notification_cb(struct timeval *tv) {
 // This is called when the device cannot connect to wifi.
 void accesspointCallback(WiFiManager*) {
     Serial.println("Connect to WWVB with another device to set wifi configuration.");
-}
-
-void readPreferences() { 
-    thePreferences.begin("watchtower", true);
-    Serial.println("Reading preferences");
-    theNtpServer = thePreferences.getString("ntp-Server", "pool.ntp.org");
-    theTimezone = thePreferences.getString("timezone", "EST5EDT,M3.2.0,M11.1.0");
-    theHostname = thePreferences.getString("hostname", "wwvb");
-    const char *myServiceString = thePreferences.getString("timeService", "AAIOT-WWVB").c_str();
-    theService = getServiceForString(myServiceString);
-    enableFlashing = thePreferences.getBool("enableFlashing", true);
-
-    Serial.printf("Preferences read: {ntp server: %s, timezone: %s, hostname: %s, service: %d, enableFlashing: %d}\n",
-        theNtpServer,
-        theTimezone.c_str(),
-        theHostname,
-        theService,
-        enableFlashing
-        );
-    thePreferences.end();
-}
-
-void savePreferences() {
-    thePreferences.begin("watchtower", false);
-    String myService = getStringForService(theService);
-    thePreferences.putString("ntp-Server", theNtpServer);
-    thePreferences.putString("timezone", theTimezone);
-    thePreferences.putString("timeService", myService);
-    thePreferences.putString("hostname", theHostname);
-    thePreferences.putBool("enableFlashing", enableFlashing);
-    thePreferences.end();
 }
 
 void setup() {
@@ -150,162 +114,6 @@ void setup() {
 
   // green means go
   flashSuccess();
-}
-
-void attachPwmPin() {
-  int myFrequency = getFrequencyForService(theService);
-  appendToLogFormat("using frequency: %d", myFrequency);
-  ledcAttach(PIN_ANTENNA, myFrequency, 8);
-}
-
-void detachPwmPin() {
-    appendToLog("detaching pwm pin");
-    digitalWrite(PIN_ANTENNA, 0);
-    ledcDetach(PIN_ANTENNA);
-}
-
-void updateTimezone() { 
-    setenv("TZ",theTimezone.c_str(),1);
-    tzset();
-}
-
-void createUi() { 
-    ControlColor myControlColor = ControlColor::Dark;
-    uint16_t mySettingsTab = ESPUI.addControl(ControlType::Tab, "Settings", "Settings");
-    uint16_t myLogTab = ESPUI.addControl(ControlType::Tab, "Log", "Log");
-
-    // host name
-    ESPUI.addControl(ControlType::Text, "Hostname:", theHostname.c_str(), myControlColor, mySettingsTab, &setHostname);
-
-    // ntp server
-    ESPUI.addControl(ControlType::Text, "NTP Server:", theNtpServer.c_str(), myControlColor, mySettingsTab, &setNtpServer);
-
-    // time zone string
-    ESPUI.addControl(ControlType::Text, "Time Zone String:", theTimezone.c_str(), myControlColor, mySettingsTab, &setTimezoneFromSelect);
-
-    const char* myServiceString = getStringForService(theService);
-
-    // time service
-    uint16_t myServiceSelect
-        = ESPUI.addControl(ControlType::Select, "Time Service:", myServiceString, myControlColor, mySettingsTab, &setServiceFromSelect);
-    ESPUI.addControl(ControlType::Option, "WWVB (USA)", "WWVB", ControlColor::None, myServiceSelect);
-    ESPUI.addControl(ControlType::Option, "DCF77 (EU)", "DCF77", ControlColor::None, myServiceSelect);
-    ESPUI.addControl(ControlType::Option, "JJY40 (ASIA)", "JJY40", ControlColor::None, myServiceSelect);
-    ESPUI.addControl(ControlType::Option, "JJY60 (ASIA)", "JJY60", ControlColor::None, myServiceSelect);
-    ESPUI.addControl(ControlType::Option, "MSF (UK)", "MSF", ControlColor::None, myServiceSelect);
-    ESPUI.addControl(ControlType::Option, "Legacy Mode (OG Code)", "LEGACY", ControlColor::None, myServiceSelect);
-
-    // enable flashing
-    ESPUI.addControl(ControlType::Switcher, "Enable Flashing", enableFlashing ? "1" : "0", myControlColor, mySettingsTab, &setEnableFlashing);
-    
-    // write preferences to nvs
-    ESPUI.addControl(ControlType::Button, "Persist Settings", "Save", ControlColor::Wetasphalt, mySettingsTab, &handlePersistSettings);
-
-    // reboot
-    ESPUI.addControl(ControlType::Button, "Reboot Device", "Reboot", ControlColor::Wetasphalt, mySettingsTab, &handleReboot);
-
-    // logs
-    liveLogHandle = ESPUI.addControl(ControlType::Label, "Log Output", "", myControlColor, myLogTab);
-    liveLogicBitsHandle = ESPUI.addControl(ControlType::Label, "Current Logic Bits", "", myControlColor, myLogTab);
-
-    ESPUI.beginLITTLEFS("Radio Controlled Watch Tower Administration");
-}
-
-int theLogCounter = 0;
-void appendToLog(const String& message) {
-    Serial.println(message);
-    logBuffer += message + "\n";
-    // Optionally, limit the size of logBuffer to prevent memory issues
-    if (logBuffer.length() > 512) { // Example limit
-        logBuffer = logBuffer.substring(logBuffer.indexOf('\n') + 1);
-    }
-
-    if (true || ++theLogCounter % 10 == 0) {
-        theLogCounter = 0;
-        ESPUI.updateText(liveLogHandle, logBuffer); // Assuming "logLabel" is the ID of your label
-    }
-}
-
-void appendToLogFormat(const char * format, ...) {
-    static char buffer[256]; // A static buffer to store the formatted string
-    va_list args;
-    va_start(args, format);
-    vsnprintf(buffer, sizeof(buffer), format, args); // Use vsnprintf for safety
-    va_end(args);
-    
-    appendToLog(buffer);
-}
-
-void updateCurrentLogicBitsLabel() { 
-    // convert logicBits to string
-    // set string
-    String myString = "";
-    for (int i = 63; i >= 0; --i) {
-        if ((logicBits >> i) & 1) {
-            myString += '1';
-        } else {
-            myString += '0';
-        }
-    }
-    ESPUI.updateText(liveLogicBitsHandle, myString);
-}
-
-void setHostname(Control* sender, int type) {
-    appendToLogFormat("Updating hostname based on value: %s", sender->value);
-    theHostname = sender->value.c_str();
-    appendToLogFormat("Updated hostname to: %s", theHostname);
-}
-
-void setNtpServer(Control* sender, int type) {
-    appendToLogFormat("Updating ntp server based on value: %s", sender->value);
-    theNtpServer = sender->value.c_str();
-    appendToLogFormat("Updated ntp server to: %s", theNtpServer);
-}
-
-void setEnableFlashing(Control* sender, int value) {
-    switch (value)
-    {
-    case S_ACTIVE:
-        appendToLog("Enable flashing");
-        enableFlashing = true;
-        break;
-
-    case S_INACTIVE:
-        appendToLog("Disable flashing");
-        enableFlashing = false;
-        break;
-    }
-}
-
-void setServiceFromSelect(Control* sender, int value)
-{
-    appendToLogFormat("Updating service based on value: %s", sender->value);
-    theService = getServiceForString(sender->value.c_str());
-    detachPwmPin();
-    attachPwmPin();
-    appendToLogFormat("Updated time service to: %d", theService);
-}
-
-void setTimezoneFromSelect(Control* sender, int value)
-{
-    appendToLogFormat("Updating timezone based on value: %s", sender->value);
-    theTimezone = sender->value;
-    updateTimezone();
-    appendToLogFormat("Updated timezone to: %s", theTimezone);
-}
-
-void handlePersistSettings(Control* sender, int type) {
-    if (type == B_UP) {
-        appendToLog("Persisting settings to NVS");
-        savePreferences();
-    }
-}
-
-void handleReboot(Control* sender, int type) {
-    if (type == B_UP) {
-        appendToLog("Forced reboot NOW");
-        forceReboot();
-    }
 }
 
 void loop() {
@@ -428,6 +236,119 @@ static inline short dutyCycle(bool logicValue) {
   return logicValue ? (256*0.5) : 0; // 128 == 50% duty cycle
 }
 
+void createUi() { 
+    ControlColor myControlColor = ControlColor::Dark;
+    uint16_t mySettingsTab = ESPUI.addControl(ControlType::Tab, "Settings", "Settings");
+    uint16_t myLogTab = ESPUI.addControl(ControlType::Tab, "Log", "Log");
+
+    // host name
+    ESPUI.addControl(ControlType::Text, "Hostname:", theHostname.c_str(), myControlColor, mySettingsTab, &setHostname);
+
+    // ntp server
+    ESPUI.addControl(ControlType::Text, "NTP Server:", theNtpServer.c_str(), myControlColor, mySettingsTab, &setNtpServer);
+
+    // time zone string
+    ESPUI.addControl(ControlType::Text, "Time Zone String:", theTimezone.c_str(), myControlColor, mySettingsTab, &setTimezoneFromSelect);
+
+    const char* myServiceString = getStringForService(theService);
+
+    // time service
+    uint16_t myServiceSelect
+        = ESPUI.addControl(ControlType::Select, "Time Service:", myServiceString, myControlColor, mySettingsTab, &setServiceFromSelect);
+    ESPUI.addControl(ControlType::Option, "WWVB (USA)", "WWVB", ControlColor::None, myServiceSelect);
+    ESPUI.addControl(ControlType::Option, "DCF77 (EU)", "DCF77", ControlColor::None, myServiceSelect);
+    ESPUI.addControl(ControlType::Option, "JJY40 (ASIA)", "JJY40", ControlColor::None, myServiceSelect);
+    ESPUI.addControl(ControlType::Option, "JJY60 (ASIA)", "JJY60", ControlColor::None, myServiceSelect);
+    ESPUI.addControl(ControlType::Option, "MSF (UK)", "MSF", ControlColor::None, myServiceSelect);
+    ESPUI.addControl(ControlType::Option, "Legacy Mode (OG Code)", "LEGACY", ControlColor::None, myServiceSelect);
+
+    // enable flashing
+    ESPUI.addControl(ControlType::Switcher, "Enable Flashing", enableFlashing ? "1" : "0", myControlColor, mySettingsTab, &setEnableFlashing);
+    
+    // write preferences to nvs
+    ESPUI.addControl(ControlType::Button, "Persist Settings", "Save", ControlColor::Wetasphalt, mySettingsTab, &handlePersistSettings);
+
+    // reboot
+    ESPUI.addControl(ControlType::Button, "Reboot Device", "Reboot", ControlColor::Wetasphalt, mySettingsTab, &handleReboot);
+
+    // logs
+    liveLogHandle = ESPUI.addControl(ControlType::Label, "Log Output", "", myControlColor, myLogTab);
+    liveLogicBitsHandle = ESPUI.addControl(ControlType::Label, "Current Logic Bits", "", myControlColor, myLogTab);
+
+    ESPUI.beginLITTLEFS("Radio Controlled Watch Tower Administration");
+}
+
+void attachPwmPin() {
+  int myFrequency = getFrequencyForService(theService);
+  appendToLogFormat("using frequency: %d", myFrequency);
+  ledcAttach(PIN_ANTENNA, myFrequency, 8);
+}
+
+void detachPwmPin() {
+    appendToLog("detaching pwm pin");
+    digitalWrite(PIN_ANTENNA, 0);
+    ledcDetach(PIN_ANTENNA);
+}
+
+void updateTimezone() { 
+    setenv("TZ",theTimezone.c_str(),1);
+    tzset();
+}
+
+void appendToLogFormat(const char * format, ...) {
+    static char buffer[256]; // A static buffer to store the formatted string
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args); // Use vsnprintf for safety
+    va_end(args);
+    
+    appendToLog(buffer);
+}
+
+void readPreferences() { 
+    thePreferences.begin("watchtower", true);
+    Serial.println("Reading preferences");
+    theNtpServer = thePreferences.getString("ntp-Server", "pool.ntp.org");
+    theTimezone = thePreferences.getString("timezone", "EST5EDT,M3.2.0,M11.1.0");
+    theHostname = thePreferences.getString("hostname", "wwvb");
+    const char *myServiceString = thePreferences.getString("timeService", "AAIOT-WWVB").c_str();
+    theService = getServiceForString(myServiceString);
+    enableFlashing = thePreferences.getBool("enableFlashing", true);
+
+    Serial.printf("Preferences read: {ntp server: %s, timezone: %s, hostname: %s, service: %d, enableFlashing: %d}\n",
+        theNtpServer,
+        theTimezone.c_str(),
+        theHostname,
+        theService,
+        enableFlashing
+        );
+    thePreferences.end();
+}
+
+void savePreferences() {
+    thePreferences.begin("watchtower", false);
+    String myService = getStringForService(theService);
+    thePreferences.putString("ntp-Server", theNtpServer);
+    thePreferences.putString("timezone", theTimezone);
+    thePreferences.putString("timeService", myService);
+    thePreferences.putString("hostname", theHostname);
+    thePreferences.putBool("enableFlashing", enableFlashing);
+    thePreferences.end();
+}
+
+void updateCurrentLogicBitsLabel() { 
+    // convert logicBits to string
+    // set string
+    String myString = "";
+    for (int i = 63; i >= 0; --i) {
+        if ((logicBits >> i) & 1) {
+            myString += '1';
+        } else {
+            myString += '0';
+        }
+    }
+    ESPUI.updateText(liveLogicBitsHandle, myString);
+}
 
 static inline void flashSuccess() {
     for (int i = 0; i < 3; i++) {
@@ -449,218 +370,75 @@ static inline void flashFailure() {
 }
 
 
-// Returns a logical high or low to indicate whether the
-// PWM signal should be high or low based on the current time
-// https://www.nist.gov/pml/time-and-frequency-division/time-distribution/radio-station-wwvb/wwvb-time-code-format
-bool wwvbLogicSignal(
-    int hour,                // 0 - 23
-    int minute,              // 0 - 59
-    int second,              // 0 - 59 (leap 60)
-    int millis,
-    int yday,                // days since January 1 eg. Jan 1 is 0
-    int year,                // year since 0, eg. 2025
-    int today_start_isdst,   // was this morning DST?
-    int tomorrow_start_isdst // is tomorrow morning DST?
-) {
-    int leap = is_leap_year(year);
-    
-    WWVB_T bit;
-    switch (second) {
-        case 0: // mark
-            bit = WWVB_T::MARK;
-            break;
-        case 1: // minute 40
-            bit = (WWVB_T)(((minute / 10) >> 2) & 1);
-            break;
-        case 2: // minute 20
-            bit = (WWVB_T)(((minute / 10) >> 1) & 1);
-            break;
-        case 3: // minute 10
-            bit = (WWVB_T)(((minute / 10) >> 0) & 1);
-            break;
-        case 4: // blank
-            bit = WWVB_T::ZERO;
-            break;
-        case 5: // minute 8
-            bit = (WWVB_T)(((minute % 10) >> 3) & 1);
-            break;
-        case 6: // minute 4
-            bit = (WWVB_T)(((minute % 10) >> 2) & 1);
-            break;
-        case 7: // minute 2
-            bit = (WWVB_T)(((minute % 10) >> 1) & 1);
-            break;
-        case 8: // minute 1
-            bit = (WWVB_T)(((minute % 10) >> 0) & 1);
-            break;
-        case 9: // mark
-            bit = WWVB_T::MARK;
-            break;
-        case 10: // blank
-            bit = WWVB_T::ZERO;
-            break;
-        case 11: // blank
-            bit = WWVB_T::ZERO;
-            break;
-        case 12: // hour 20
-            bit = (WWVB_T)(((hour / 10) >> 1) & 1);
-            break;
-        case 13: // hour 10
-            bit = (WWVB_T)(((hour / 10) >> 0) & 1);
-            break;
-        case 14: // blank
-            bit = WWVB_T::ZERO;
-            break;
-        case 15: // hour 8
-            bit = (WWVB_T)(((hour % 10) >> 3) & 1);
-            break;
-        case 16: // hour 4
-            bit = (WWVB_T)(((hour % 10) >> 2) & 1);
-            break;
-        case 17: // hour 2
-            bit = (WWVB_T)(((hour % 10) >> 1) & 1);
-            break;
-        case 18: // hour 1
-            bit = (WWVB_T)(((hour % 10) >> 0) & 1);
-            break;
-        case 19: // mark
-            bit = WWVB_T::MARK;
-            break;
-        case 20: // blank
-            bit = WWVB_T::ZERO;
-            break;
-        case 21: // blank
-            bit = WWVB_T::ZERO;
-            break;
-        case 22: // yday of year 200
-            bit = (WWVB_T)(((yday / 100) >> 1) & 1);
-            break;
-        case 23: // yday of year 100
-            bit = (WWVB_T)(((yday / 100) >> 0) & 1);
-            break;
-        case 24: // blank
-            bit = WWVB_T::ZERO;
-            break;
-        case 25: // yday of year 80
-            bit = (WWVB_T)((((yday / 10) % 10) >> 3) & 1);
-            break;
-        case 26: // yday of year 40
-            bit = (WWVB_T)((((yday / 10) % 10) >> 2) & 1);
-            break;
-        case 27: // yday of year 20
-            bit = (WWVB_T)((((yday / 10) % 10) >> 1) & 1);
-            break;
-        case 28: // yday of year 10
-            bit = (WWVB_T)((((yday / 10) % 10) >> 0) & 1);
-            break;
-        case 29: // mark
-            bit = WWVB_T::MARK;
-            break;
-        case 30: // yday of year 8
-            bit = (WWVB_T)(((yday % 10) >> 3) & 1);
-            break;
-        case 31: // yday of year 4
-            bit = (WWVB_T)(((yday % 10) >> 2) & 1);
-            break;
-        case 32: // yday of year 2
-            bit = (WWVB_T)(((yday % 10) >> 1) & 1);
-            break;
-        case 33: // yday of year 1
-            bit = (WWVB_T)(((yday % 10) >> 0) & 1);
-            break;
-        case 34: // blank
-            bit = WWVB_T::ZERO;
-            break;
-        case 35: // blank
-            bit = WWVB_T::ZERO;
-            break;
-        case 36: // UTI sign +
-            bit = WWVB_T::ONE;
-            break;
-        case 37: // UTI sign -
-            bit = WWVB_T::ZERO;
-            break;
-        case 38: // UTI sign +
-            bit = WWVB_T::ONE;
-            break;
-        case 39: // mark
-            bit = WWVB_T::MARK;
-            break;
-        case 40: // UTI correction 0.8
-            bit = WWVB_T::ZERO;
-            break;
-        case 41: // UTI correction 0.4
-            bit = WWVB_T::ZERO;
-            break;
-        case 42: // UTI correction 0.2
-            bit = WWVB_T::ZERO;
-            break;
-        case 43: // UTI correction 0.1
-            bit = WWVB_T::ZERO;
-            break;
-        case 44: // blank
-            bit = WWVB_T::ZERO;
-            break;
-        case 45: // year 80
-            bit = (WWVB_T)((((year / 10) % 10) >> 3) & 1);
-            break;
-        case 46: // year 40
-            bit = (WWVB_T)((((year / 10) % 10) >> 2) & 1);
-            break;
-        case 47: // year 20
-            bit = (WWVB_T)((((year / 10) % 10) >> 1) & 1);
-            break;
-        case 48: // year 10
-            bit = (WWVB_T)((((year / 10) % 10) >> 0) & 1);
-            break;
-        case 49: // mark
-            bit = WWVB_T::MARK;
-            break;
-        case 50: // year 8
-            bit = (WWVB_T)(((year % 10) >> 3) & 1);
-            break;
-        case 51: // year 4
-            bit = (WWVB_T)(((year % 10) >> 2) & 1);
-            break;
-        case 52: // year 2
-            bit = (WWVB_T)(((year % 10) >> 1) & 1);
-            break;
-        case 53: // year 1
-            bit = (WWVB_T)(((year % 10) >> 0) & 1);
-            break;
-        case 54: // blank
-            bit = WWVB_T::ZERO;
-            break;
-        case 55: // leap year
-            bit = leap ? WWVB_T::ONE : WWVB_T::ZERO;
-            break;
-        case 56: // leap second
-            bit = WWVB_T::ZERO;
-            break;
-        case 57: // dst bit 1
-            bit = today_start_isdst ? WWVB_T::ONE : WWVB_T::ZERO;
-            break;
-        case 58: // dst bit 2
-            bit = tomorrow_start_isdst ? WWVB_T::ONE : WWVB_T::ZERO;
-            break;
-        case 59: // mark
-            bit = WWVB_T::MARK;
-            break;
-    }
+void setHostname(Control* sender, int type) {
+    appendToLogFormat("Updating hostname based on value: %s", sender->value);
+    theHostname = sender->value.c_str();
+    appendToLogFormat("Updated hostname to: %s", theHostname);
+}
 
-    // Convert a wwvb zero, one, or mark to the appropriate pulse width
-    // zero: low 200ms, high 800ms
-    // one: low 500ms, high 500ms
-    // mark low 800ms, high 200ms
-    if (bit == WWVB_T::ZERO) {
-      return millis >= 200;
-    } else if (bit == WWVB_T::ONE) {
-      return millis >= 500;
-    } else {
-      return millis >= 800;
+void setNtpServer(Control* sender, int type) {
+    appendToLogFormat("Updating ntp server based on value: %s", sender->value);
+    theNtpServer = sender->value.c_str();
+    appendToLogFormat("Updated ntp server to: %s", theNtpServer);
+}
+
+void setEnableFlashing(Control* sender, int value) {
+    switch (value)
+    {
+    case S_ACTIVE:
+        appendToLog("Enable flashing");
+        enableFlashing = true;
+        break;
+
+    case S_INACTIVE:
+        appendToLog("Disable flashing");
+        enableFlashing = false;
+        break;
     }
 }
 
-static inline int is_leap_year(int year) {
-    return (year % 4 == 0) && (year % 100 != 0 || year % 400 == 0);
+void setServiceFromSelect(Control* sender, int value)
+{
+    appendToLogFormat("Updating service based on value: %s", sender->value);
+    theService = getServiceForString(sender->value.c_str());
+    detachPwmPin();
+    attachPwmPin();
+    appendToLogFormat("Updated time service to: %d", theService);
+}
+
+void setTimezoneFromSelect(Control* sender, int value)
+{
+    appendToLogFormat("Updating timezone based on value: %s", sender->value);
+    theTimezone = sender->value;
+    updateTimezone();
+    appendToLogFormat("Updated timezone to: %s", theTimezone);
+}
+
+void handlePersistSettings(Control* sender, int type) {
+    if (type == B_UP) {
+        appendToLog("Persisting settings to NVS");
+        savePreferences();
+    }
+}
+
+void handleReboot(Control* sender, int type) {
+    if (type == B_UP) {
+        appendToLog("Forced reboot NOW");
+        forceReboot();
+    }
+}
+
+int theLogCounter = 0;
+void appendToLog(const String& message) {
+    Serial.println(message);
+    logBuffer += message + "\n";
+    // Optionally, limit the size of logBuffer to prevent memory issues
+    if (logBuffer.length() > 512) { // Example limit
+        logBuffer = logBuffer.substring(logBuffer.indexOf('\n') + 1);
+    }
+
+    if (true || ++theLogCounter % 10 == 0) {
+        theLogCounter = 0;
+        ESPUI.updateText(liveLogHandle, logBuffer); // Assuming "logLabel" is the ID of your label
+    }
 }
