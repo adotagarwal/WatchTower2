@@ -1,6 +1,20 @@
-# The Watch Tower WWVB transmitter
+# The Watch Tower WWVB transmitter - V2
 
 ![](docs/ezgif-2a44364473c432.gif)
+![](docs/WatchTower2.jpeg)
+
+### This version has been updated to add a web gui for setting parameters (described in [424d3f8](https://github.com/adotagarwal/WatchTower2/commit/424d3f86f80151f93de71e6e73d6c25675c46d04)) and viewing log information, as well as supporting new protocols for time synchronization: WWVB, JJY (40&60), DCF77, MSF
+
+This support was made possible by the work over at [time-signal](https://github.com/harlock974/time-signal) by Pierre Brial which I have adapted here.
+
+## (NEW) UI
+Settings tab preview:
+![](docs/SettingsTab.png)
+
+Log tab preview:
+![](docs/LogTab.png)
+
+Below is the original README
 
 There are some beautiful radio-controlled watches available these days from Citizen, Seiko, Junghans, and even Casio. These timepieces don’t need fiddling every other month, which is great if you have more than one or two and can never remember what comes after “thirty days hath September…”
 
